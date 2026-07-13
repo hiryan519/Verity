@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verity Living Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            workspace: "#FAFAF8",
+            surface: "#FFFFFF",
+            line: "#E5E5E5",
+            sage: "#78907A",
+            "sage-light": "#EAF0EA",
+            ink: "#333333",
+            warning: "#F5A623"
+          },
+          fontFamily: {
+            sans: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "PingFang SC", "Microsoft YaHei", "sans-serif"],
+            serif: ['"Noto Serif SC"', "Georgia", "serif"]
+          },
+          boxShadow: {
+            "float": "0 1px 2px rgba(0, 0, 0, 0.04)"
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background:
+        linear-gradient(rgba(120, 144, 122, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120, 144, 122, 0.035) 1px, transparent 1px),
+        #FAFAF8;
+      background-size: 32px 32px;
+      color: #333333;
+      letter-spacing: 0;
+    }
+
+    .glass-line {
+      background-image: linear-gradient(90deg, transparent, rgba(120, 144, 122, 0.38), transparent);
+    }
+  </style>
+</head>
+<body class="font-sans antialiased">
+  <main class="mx-auto max-w-7xl px-6 py-8 sm:px-8 lg:px-10">
+    <header class="grid min-h-[520px] grid-cols-1 border-b border-line pb-16 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14">
+      <aside class="flex flex-col justify-between border-line lg:border-r lg:pr-12">
+        <nav class="flex items-center justify-between text-xs text-ink/60">
+          <div class="flex items-center gap-3">
+            <div class="grid h-9 w-9 place-items-center rounded-xl border border-line bg-surface text-sm font-semibold text-sage">V</div>
+            <span class="tracking-[0.22em]">VERITY SYSTEM</span>
+          </div>
+          <span>v0.1</span>
+        </nav>
+
+        <div class="mt-24 lg:mt-0">
+          <p class="mb-5 text-xs uppercase tracking-[0.28em] text-sage">Living Design System</p>
+          <h1 class="font-serif max-w-xl text-[28px] font-medium leading-relaxed text-ink sm:text-5xl sm:leading-[1.18]">
+            A clear greenhouse for evidence, agents, and decisions.
+          </h1>
+          <p class="mt-6 max-w-md text-sm leading-[1.7] text-ink/65">
+            Verity 的界面应像明亮、干净的温室玻璃房：结构透明、秩序清晰、带一点有机的鼠尾草绿。UI 退居幕后，让证据、结论和可追溯链路成为主角。
+          </p>
+        </div>
+      </aside>
+
+      <section class="mt-12 grid content-end gap-4 lg:mt-0">
+        <div class="rounded-xl border border-line bg-surface p-5">
+          <div class="mb-4 flex items-center justify-between">
+            <span class="text-xs text-ink/50">Research workspace sample</span>
+            <span class="rounded-md bg-sage-light px-2.5 py-1 text-xs font-medium text-sage">Mock UI specimen</span>
+          </div>
+          <div class="grid gap-3 lg:grid-cols-[170px_1fr_210px]">
+            <div class="rounded-xl border border-line bg-sage-light/70 p-4">
+              <p class="text-xs font-medium text-sage">Pipeline</p>
+              <div class="mt-5 space-y-4">
+                <div class="flex items-center gap-3 text-xs text-ink/70"><span class="h-2 w-2 rounded-full bg-sage"></span>Scope confirmed</div>
+                <div class="flex items-center gap-3 text-xs text-ink/70"><span class="h-2 w-2 rounded-full bg-sage"></span>Evidence collection</div>
+                <div class="flex items-center gap-3 text-xs text-ink/45"><span class="h-2 w-2 rounded-full bg-line"></span>QA gate</div>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-line bg-surface p-5">
+              <p class="text-xs text-ink/50">Claim preview</p>
+              <p class="font-serif mt-3 text-sm leading-relaxed text-ink">
+                Notion AI 更适合存量文档协作场景，而 Gamma 更偏向从零生成展示型内容
+                <span class="font-sans inline-flex items-center rounded-md bg-sage-light px-2 py-0.5 text-xs font-medium text-sage">🔗 2条证据</span>
+                <span class="font-sans inline-flex items-center rounded-md bg-sage-light px-2 py-0.5 text-xs font-medium text-sage">高置信 86</span>
+              </p>
+            </div>
+
+            <div class="rounded-xl border border-line bg-surface p-4">
+              <p class="text-xs font-medium text-ink">Evidence card</p>
+              <p class="mt-2 text-xs leading-relaxed text-ink/60">官网价格页，可复查；用户声音样本不足，不能支撑强结论。</p>
+              <div class="mt-4 h-px bg-line"></div>
+              <div class="mt-4 flex items-center justify-between text-xs">
+                <span class="text-ink/50">confidence</span>
+                <span class="font-medium text-sage">86</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="h-px w-full glass-line"></div>
+      </section>
+    </header>
+
+    <section class="grid gap-10 border-b border-line py-20 lg:grid-cols-[260px_1fr]">
+      <div>
+        <p class="text-xs uppercase tracking-[0.26em] text-sage">01 / Color Palette</p>
+        <h2 class="font-serif mt-3 text-lg font-medium leading-relaxed text-ink">颜色系统</h2>
+        <p class="mt-4 text-sm leading-[1.7] text-ink/60">低饱和、暖白、细线。品牌色只在动作、状态和证据强调处出现。</p>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="rounded-xl border border-line bg-[#FAFAF8] p-4">
+          <div class="h-24 rounded-lg border border-line bg-[#FAFAF8]"></div>
+          <p class="mt-4 text-sm font-medium">Bg-Workspace</p>
+          <p class="mt-1 text-xs text-ink/50">#FAFAF8</p>
+        </article>
+        <article class="rounded-xl border border-line bg-surface p-4">
+          <div class="h-24 rounded-lg border border-line bg-[#FFFFFF]"></div>
+          <p class="mt-4 text-sm font-medium">Bg-Surface</p>
+          <p class="mt-1 text-xs text-ink/50">#FFFFFF</p>
+        </article>
+        <article class="rounded-xl border border-line bg-surface p-4">
+          <div class="h-24 rounded-lg border border-line bg-[#E5E5E5]"></div>
+          <p class="mt-4 text-sm font-medium">Border-Line</p>
+          <p class="mt-1 text-xs text-ink/50">#E5E5E5</p>
+        </article>
+        <article class="rounded-xl border border-line bg-surface p-4">
+          <div class="h-24 rounded-lg bg-[#78907A]"></div>
+          <p class="mt-4 text-sm font-medium">Brand-Sage</p>
+          <p class="mt-1 text-xs text-ink/50">#78907A</p>
+        </article>
+        <article class="rounded-xl border border-line bg-surface p-4">
+          <div class="h-24 rounded-lg border border-line bg-[#EAF0EA]"></div>
+          <p class="mt-4 text-sm font-medium">Brand-Sage-Light</p>
+          <p class="mt-1 text-xs text-ink/50">#EAF0EA</p>
+        </article>
+        <article class="rounded-xl border border-line bg-surface p-4">
+          <div class="h-24 rounded-lg bg-[#333333]"></div>
+          <p class="mt-4 text-sm font-medium">Text-Main</p>
+          <p class="mt-1 text-xs text-ink/50">#333333</p>
+        </article>
+        <article class="rounded-xl border border-line bg-surface p-4">
+          <div class="h-24 rounded-lg bg-[#F5A623]"></div>
+          <p class="mt-4 text-sm font-medium">Semantic-Warning</p>
+          <p class="mt-1 text-xs text-ink/50">#F5A623</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="grid gap-10 border-b border-line py-20 lg:grid-cols-[260px_1fr]">
+      <div>
+        <p class="text-xs uppercase tracking-[0.26em] text-sage">02 / Typography</p>
+        <h2 class="font-serif mt-3 text-lg font-medium leading-relaxed text-ink">排版</h2>
+        <p class="mt-4 text-sm leading-[1.7] text-ink/60">Inter 承载 UI 与数据层，Noto Serif SC 承载展示层与长阅读层。标题克制，正文行高充足，适合长时间阅读报告。</p>
+      </div>
+
+      <div class="rounded-xl border border-line bg-surface p-6 sm:p-8">
+        <div class="border-b border-line pb-8">
+          <p class="mb-3 text-xs text-ink/45">H1 / 28px / medium</p>
+          <h1 class="font-serif text-[28px] font-medium leading-relaxed text-ink">证据先于结论，Trace 解释过程。</h1>
+        </div>
+        <div class="border-b border-line py-8">
+          <p class="mb-3 text-xs text-ink/45">H2 / 18px / medium</p>
+          <h2 class="font-serif text-lg font-medium leading-relaxed text-ink">报告阅读与证据侧栏</h2>
+        </div>
+        <div class="border-b border-line py-8">
+          <p class="mb-3 text-xs text-ink/45">Body / 14px / line-height 1.7</p>
+          <p class="font-serif max-w-2xl text-sm leading-relaxed text-ink/75">
+            Verity 的正文不是营销文案，而是可复查的研究档案。每一个核心判断都应该尽量绑定证据；当证据不足、冲突或过期时，界面需要把风险清楚地放在用户眼前。
+          </p>
+        </div>
+        <div class="pt-8">
+          <p class="mb-3 text-xs text-ink/45">Caption / 12px</p>
+          <p class="text-xs text-ink/55">Collected at 2026-07-10 · Source authority 92 · Relevance 88</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid gap-10 border-b border-line py-20 lg:grid-cols-[260px_1fr]">
+      <div>
+        <p class="text-xs uppercase tracking-[0.26em] text-sage">03 / Material & Shapes</p>
+        <h2 class="font-serif mt-3 text-lg font-medium leading-relaxed text-ink">容器与材质</h2>
+        <p class="mt-4 text-sm leading-[1.7] text-ink/60">精密、扁平、轻量。卡片依靠边框和留白建立层级，不靠重阴影。</p>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-3">
+        <article class="rounded-xl border border-line bg-surface p-5">
+          <p class="text-sm font-medium text-ink">Default card</p>
+          <p class="mt-3 text-sm leading-[1.7] text-ink/60">白底、1px 细边框、12px 圆角。用于报告段落、证据卡和任务容器。</p>
+        </article>
+        <article class="rounded-xl border border-line bg-surface p-5 shadow-sm">
+          <p class="text-sm font-medium text-ink">Floating layer</p>
+          <p class="mt-3 text-sm leading-[1.7] text-ink/60">只在悬浮工具条、下拉层、证据展开层使用极弱 shadow-sm。</p>
+        </article>
+        <article class="rounded-xl border border-line bg-sage-light p-5">
+          <p class="text-sm font-medium text-sage">Soft surface</p>
+          <p class="mt-3 text-sm leading-[1.7] text-sage/80">浅绿背景用于次级区域，不承担主要内容阅读压力。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="grid gap-10 py-20 lg:grid-cols-[260px_1fr]">
+      <div>
+        <p class="text-xs uppercase tracking-[0.26em] text-sage">04 / Key Components</p>
+        <h2 class="font-serif mt-3 text-lg font-medium leading-relaxed text-ink">关键组件</h2>
+        <p class="mt-4 text-sm leading-[1.7] text-ink/60">组件要像标注和证据夹片，精巧、安静，但在需要判断可信度时足够明确。</p>
+      </div>
+
+      <div class="grid gap-4">
+        <article class="rounded-xl border border-line bg-surface p-6">
+          <div class="mb-5 flex items-center justify-between gap-4 border-b border-line pb-5">
+            <div>
+              <p class="text-sm font-medium text-ink">Confidence Tag</p>
+              <p class="mt-1 text-xs text-ink/50">用于证据和 Claim 的可信度表达</p>
+            </div>
+            <span class="rounded-md bg-sage-light px-2.5 py-1 text-xs font-medium text-sage">高置信 86</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="rounded-md bg-sage-light px-2.5 py-1 text-xs font-medium text-sage">高置信 86</span>
+            <span class="rounded-md bg-[#FFF4DD] px-2.5 py-1 text-xs font-medium text-[#9B6500]">中置信 64</span>
+            <span class="rounded-md bg-[#FBEAEA] px-2.5 py-1 text-xs font-medium text-[#B42318]">低置信 38</span>
+          </div>
+        </article>
+
+        <article class="rounded-xl border border-line bg-surface p-6">
+          <p class="text-sm font-medium text-ink">Citation Pill</p>
+          <p class="font-serif mt-4 max-w-3xl text-sm leading-relaxed text-ink/75">
+            Gamma 更偏向从零生成展示型内容，而 Notion AI 更依赖已有知识库和文档上下文
+            <span class="font-sans inline-flex items-center rounded-md border border-[#D8E3D8] bg-sage-light px-2 py-0.5 text-xs font-medium text-sage">🔗 2条证据</span>
+            。点击后应在右侧证据栏定位原始来源，而不是打断阅读流。
+          </p>
+        </article>
+
+        <article class="rounded-xl border border-line bg-surface p-6">
+          <p class="text-sm font-medium text-ink">Agent Action Card</p>
+          <div class="mt-5 rounded-xl border border-line bg-surface p-4">
+            <div class="flex items-start gap-3">
+              <div class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sage text-xs font-semibold text-white">采</div>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p class="text-sm font-medium text-ink">Evidence Collector</p>
+                    <p class="mt-1 text-xs text-ink/50">正在整理公开网页与用户上传材料</p>
+                  </div>
+                  <span class="rounded-md bg-sage-light px-2.5 py-1 text-xs font-medium text-sage">Running</span>
+                </div>
+                <div class="mt-4 rounded-xl border border-line bg-workspace p-4">
+                  <p class="font-serif text-sm leading-relaxed text-ink/70">
+                    已发现 3 条价格页证据，其中 2 条可复查，1 条时间戳过旧。该结论将进入 Analysis Pack，但需要 QA Gate 检查证据时效性。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

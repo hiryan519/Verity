@@ -1,0 +1,87 @@
+{
+  "research_goal": "验证本地受控证据能否经 Evolva WorkflowEngine 进入 Verity 的证据、结论和质检链路。",
+  "competitors": ["Fixture Product A", "Fixture Product B"],
+  "dimensions": ["产品定位", "定价策略", "用户声音"],
+  "evidence_items": [
+    {
+      "id": "ev_workflow_local_001",
+      "title": "Fixture Product A positioning brief",
+      "file_source": "apps/api/verity_api/fixtures/bounded_local_evidence.json",
+      "source_type": "primary",
+      "platform": "local-fixture",
+      "publisher": "Verity bounded-workflow fixture",
+      "captured_at": "2026-07-12",
+      "retrieval_status": "success",
+      "claim_types": ["positioning"],
+      "relevance": "direct",
+      "specificity": "high",
+      "specific_signals": ["target workflow", "product boundary"],
+      "corroborating_sources": 2,
+      "risk_flags": [],
+      "summary": "受控本地材料：Product A 被描述为面向既有文档协作流程的增量能力。"
+    },
+    {
+      "id": "ev_workflow_local_002",
+      "title": "Fixture user feedback sample",
+      "file_source": "apps/api/verity_api/fixtures/bounded_local_evidence.json",
+      "source_type": "user_review",
+      "platform": "local-fixture",
+      "publisher": "Verity bounded-workflow fixture",
+      "captured_at": "2026-07-12",
+      "retrieval_status": "success",
+      "claim_types": ["user_voice"],
+      "relevance": "direct",
+      "specificity": "high",
+      "specific_signals": ["onboarding friction", "team workflow"],
+      "corroborating_sources": 1,
+      "risk_flags": ["small_sample"],
+      "summary": "受控本地材料：小样本反馈提示团队协作上手成本存在分歧。"
+    },
+    {
+      "id": "ev_workflow_local_003",
+      "title": "Fixture Product B pricing brief",
+      "file_source": "apps/api/verity_api/fixtures/bounded_local_evidence.json",
+      "source_type": "official_doc",
+      "platform": "local-fixture",
+      "publisher": "Verity bounded-workflow fixture",
+      "captured_at": "2026-07-12",
+      "retrieval_status": "success",
+      "claim_types": ["pricing"],
+      "relevance": "direct",
+      "specificity": "high",
+      "specific_signals": ["team plan", "usage boundary"],
+      "corroborating_sources": 2,
+      "risk_flags": [],
+      "summary": "受控本地材料：Product B 的套餐边界以团队协作席位和使用量条件描述。"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim_workflow_local_001",
+      "text": "Product A 更适合作为既有文档协作流程中的增量能力。",
+      "status": "supported",
+      "strength": "strong",
+      "dimension": "产品定位",
+      "evidence_ids": ["ev_workflow_local_001"],
+      "risk_note": "仅由本地受控材料验证 workflow 映射，不代表线上竞品事实。"
+    },
+    {
+      "id": "claim_workflow_local_002",
+      "text": "Product B 的团队套餐边界需要结合席位和使用量条件阅读。",
+      "status": "supported",
+      "strength": "strong",
+      "dimension": "定价策略",
+      "evidence_ids": ["ev_workflow_local_003"],
+      "risk_note": "仅由本地受控材料验证 workflow 映射，不代表线上定价事实。"
+    },
+    {
+      "id": "claim_workflow_local_003",
+      "text": "团队协作上手体验可能存在分歧，需扩大用户样本验证。",
+      "status": "weakly_supported",
+      "strength": "weak",
+      "dimension": "用户声音",
+      "evidence_ids": ["ev_workflow_local_002"],
+      "risk_note": "样本不足，只能作为风险提示。"
+    }
+  ]
+}

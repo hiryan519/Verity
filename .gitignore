@@ -16,6 +16,16 @@ htmlcov/
 .idea/
 .DS_Store
 
+# Web
+node_modules/
+.next/
+out/
+coverage/
+*.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 # Local Evolva runtime state
 .evolva/
 evolva/context/
