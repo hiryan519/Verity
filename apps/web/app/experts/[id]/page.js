@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Calculator, Check, Lock, MessageSquare, Route, ShieldCheck, Split } from "lucide-react";
 
 import { getApiData, toolStatusLabel } from "@/lib/api";
 
@@ -16,18 +17,18 @@ const visualMemories = [
   {
     id: "visual-memory-token-pricing",
     name: "Token 维度比价",
-    confidence: "82%",
-    content: "比较 API 价格时必须换算同预算 token 可用量、调用次数和套餐限制。",
+    confidence: "conf 91",
+    content: "分析 AI 模型价格时，不能只比较订阅价；必须追问同等价格下 API 调用额度、token 单价和用量上限。",
     source: "用户批注",
     impact: "定价分析任务"
   },
   {
     id: "visual-memory-official-case-bias",
-    name: "官网案例偏差",
-    confidence: "76%",
-    content: "官网客户案例只能作为官方筛选样本，不能支撑自然用户体验结论。",
+    name: "官方价格优先",
+    confidence: "conf 88",
+    content: "价格 Claim 默认优先绑定官网价格页；媒体或博客只能作为补充解释，不能替代价格源。",
     source: "QA 返工",
-    impact: "用户体验分析 / 证据绑定规则"
+    impact: "证据绑定规则"
   }
 ];
 
@@ -47,47 +48,7 @@ const visualSkills = [
 ];
 
 function StatusIcon({ status }) {
-  if (status === "allowed") {
-    return (
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M3.2 8.2 6.4 11.4 12.8 4.8" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <rect x="4.2" y="7" width="7.6" height="5.8" rx="1.2" />
-      <path d="M5.8 7V5.4a2.2 2.2 0 0 1 4.4 0V7" />
-    </svg>
-  );
-}
-
-function MemoryMetaIcon({ type }) {
-  if (type === "impact") {
-    return (
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M8 2.2v11.6M2.2 8h11.6" />
-        <circle cx="8" cy="8" r="4.8" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M4.2 2.8h5.6l2 2v8.4H4.2z" />
-      <path d="M9.8 2.8v2h2" />
-      <path d="M6 8h4M6 10.4h3" />
-    </svg>
-  );
-}
-
-function SkillIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M8 2.2 10 6l3.8.6-2.8 2.7.7 3.8L8 11.3 4.3 13l.7-3.8-2.8-2.7L6 6z" />
-    </svg>
-  );
+  return status === "allowed" ? <Check aria-hidden="true" /> : <Lock aria-hidden="true" />;
 }
 
 export default async function ExpertDetailPage({ params }) {
@@ -179,27 +140,27 @@ ${expert.boundaries.map((item) => `- ${item}`).join("\n")}`}</pre>
                 <span>只展示来源、状态和影响</span>
               </div>
               <div className="memory-tabs">
-                <span className="active">Active Memory</span>
-                <span>Candidate</span>
+                <span className="memory-tab active">Active Memory</span>
+                <span className="memory-tab">Candidate</span>
               </div>
               <div className="memory-list">
                 {visualMemories.map((memory) => (
                   <article key={memory.id} className="memory-item">
                     <div className="memory-item-head">
                       <strong>{memory.name}</strong>
-                      <span>{memory.confidence}</span>
+                      <span className="memory-score">{memory.confidence}</span>
                     </div>
                     <p>{memory.content}</p>
-                    <small>
+                    <div className="memory-provenance">
                       <span>
-                        <MemoryMetaIcon type="source" />
+                        {memory.source === "QA 返工" ? <ShieldCheck aria-hidden="true" /> : <MessageSquare aria-hidden="true" />}
                         来源：{memory.source}
                       </span>
                       <span>
-                        <MemoryMetaIcon type="impact" />
-                        影响对象：{memory.impact}
+                        <Route aria-hidden="true" />
+                        影响：{memory.impact}
                       </span>
-                    </small>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -214,7 +175,7 @@ ${expert.boundaries.map((item) => `- ${item}`).join("\n")}`}</pre>
                 {visualSkills.map((skill) => (
                   <article key={skill.id} className="skill-item">
                     <strong>
-                      <SkillIcon />
+                      {skill.id === "visual-skill-package-boundary" ? <Split aria-hidden="true" /> : <Calculator aria-hidden="true" />}
                       {skill.name} · {skill.version}
                     </strong>
                     <span>{skill.summary}</span>

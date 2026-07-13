@@ -457,6 +457,7 @@ button {
 .expert-meta-tags svg,
 .permission-status svg,
 .memory-item small svg,
+.memory-provenance svg,
 .skill-item svg {
   width: 15px;
   height: 15px;
@@ -560,8 +561,9 @@ button {
 
 .expert-config-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.42fr) minmax(300px, 0.78fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
   gap: 0;
+  min-height: 720px;
 }
 
 .expert-logic,
@@ -569,10 +571,12 @@ button {
   display: grid;
   gap: 0;
   align-content: start;
+  padding: 22px;
 }
 
 .expert-assets {
   border-left: 1px solid var(--line);
+  background: #fcfcfa;
 }
 
 .config-block {
@@ -583,65 +587,61 @@ button {
 }
 
 .config-block + .config-block {
-  border-top: 1px solid var(--line);
+  margin-top: 22px;
 }
 
 .config-title {
-  min-height: 54px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 15px;
-  border-bottom: 1px solid var(--line);
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .config-title h2 {
   margin: 0;
+  color: var(--ink);
   font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .config-title span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .code-panel {
-  margin: 14px;
-  padding: 14px;
-  border: 1px solid #dfe7df;
-  border-radius: 10px;
-  background: #f7faf5;
-  box-shadow: 0 10px 24px rgba(86, 112, 88, 0.04);
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(249, 250, 249, 0.95);
 }
 
 .code-panel pre {
   margin: 0;
   white-space: pre-wrap;
-  color: rgba(51, 51, 51, 0.72);
-  font-family: "Noto Serif SC", Georgia, serif;
-  font-size: 13px;
-  line-height: 1.82;
+  color: rgba(51, 51, 51, 0.78);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.75;
 }
 
 .tool-list,
 .memory-list {
   display: grid;
   gap: 10px;
-  padding: 14px;
 }
 
 .tool-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 13px;
+  gap: 12px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fdfdfb;
+  border-radius: 12px;
+  background: var(--surface);
 }
 
 .tool-row > div {
@@ -650,72 +650,72 @@ button {
 
 .tool-row strong {
   display: block;
+  color: var(--ink);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .tool-row > div > span {
   display: block;
   margin-top: 4px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
 .permission-status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  justify-content: center;
-  min-height: 26px;
-  min-width: 64px;
-  padding: 0 10px;
+  gap: 5px;
+  padding: 4px 8px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
+  color: var(--muted);
+  background: rgba(229, 229, 229, 0.42);
+  font-size: 11px;
+  font-weight: 700;
   white-space: nowrap;
   flex: 0 0 auto;
 }
 
 .permission-status.allowed {
-  color: #6f8a72;
-  background: #edf3ed;
+  color: var(--sage);
+  background: rgba(234, 240, 234, 0.9);
 }
 
 .permission-status.disabled {
-  color: rgba(51, 51, 51, 0.46);
-  background: #f4f4f1;
+  color: var(--muted);
+  background: rgba(229, 229, 229, 0.42);
 }
 
 .memory-tabs {
   display: flex;
-  gap: 6px;
-  padding: 14px 14px 0;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.memory-tabs span {
-  min-height: 28px;
+.memory-tab {
   display: inline-flex;
   align-items: center;
-  padding: 0 9px;
-  border-radius: 7px;
-  color: rgba(51, 51, 51, 0.56);
-  background: #f5f5f2;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(229, 229, 229, 0.36);
   font-size: 12px;
+  font-weight: 700;
 }
 
-.memory-tabs .active {
+.memory-tab.active {
   color: var(--sage);
-  background: var(--sage-light);
+  background: rgba(234, 240, 234, 0.95);
 }
 
 .memory-item,
 .skill-item,
 .empty-governance {
-  padding: 13px;
+  padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fdfdfb;
+  border-radius: 12px;
+  background: var(--surface);
 }
 
 .memory-item-head {
@@ -723,52 +723,71 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-bottom: 7px;
 }
 
 .memory-item strong,
-.skill-item strong,
 .empty-governance strong {
   display: block;
-  font-size: 13px;
-  font-weight: 600;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
 }
 
-.memory-item-head span {
+.memory-score {
   color: var(--sage);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.memory-item p,
-.skill-item span,
-.empty-governance span {
-  display: block;
-  margin-top: 8px;
-  color: rgba(51, 51, 51, 0.62);
+.memory-item p {
+  margin: 0;
+  color: rgba(51, 51, 51, 0.64);
   font-family: "Noto Serif SC", Georgia, serif;
   font-size: 13px;
-  line-height: 1.72;
+  line-height: 1.75;
 }
 
-.memory-item small {
-  display: grid;
-  gap: 5px;
-  margin-top: 8px;
+.memory-provenance {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
   color: var(--muted);
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
   font-size: 11px;
-  line-height: 1.5;
 }
 
-.memory-item small span {
+.memory-provenance span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
+.skill-item {
+  display: grid;
+  gap: 5px;
+  padding: 11px 12px;
+}
+
 .skill-item strong {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.skill-item span,
+.empty-governance span {
+  display: block;
+  color: var(--muted);
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.55;
 }
 
 @media (max-width: 1180px) {
