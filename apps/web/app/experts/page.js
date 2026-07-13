@@ -1,34 +1,91 @@
-import { SectionTitle } from "@/components/ui";
-import { getApiData, toExpertCard } from "@/lib/api";
+import Link from "next/link";
+
+import { getApiData, toExpertCard, toolStatusLabel } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
+
+const layerTabs = ["全部", "L3 决策层", "L2 策略层", "L1 执行层"];
+
+function shortLayer(layer) {
+  if (layer?.startsWith("L3")) return "L3 决策";
+  if (layer?.startsWith("L2")) return "L2 策略";
+  if (layer?.startsWith("L1")) return "L1 执行";
+  return layer;
+}
+
+function metaFor(expert) {
+  const allowedTools = expert.tools.filter((tool) => tool.status === "allowed");
+  return [
+    allowedTools.length ? `${allowedTools.length} 项工具允许` : "无外部工具",
+    expert.supportsMultiInstance ? "支持多实例" : "单实例",
+    expert.outputSchema
+  ];
+}
 
 export default async function ExpertsPage() {
   const { dataSource, items, error } = await getApiData("/api/experts");
   const experts = items.map(toExpertCard);
-  const badge = dataSource ? `${dataSource.mode} · ${dataSource.seed} seed` : "API 未连接";
+  const badge = dataSource ? `${dataSource.mode} · ${dataSource.seed}` : "API 未连接";
 
   return (
-    <div>
-      <SectionTitle
-        eyebrow="Expert Agent Library"
-        title="专家公会"
-        description="专家是可被 Orchestrator 调度的任务型 Agent，不是单纯 Skill。每个专家都有目标、工具边界、输出 Schema 和 Trace。"
-        badge={badge}
-      />
+    <div className="expert-page-shell">
+      <section className="expert-hero">
+        <div>
+          <p className="eyebrow">Expert Agent Library</p>
+          <h1>专家公会</h1>
+          <p>
+            专家公会展示 Verity 的 Expert Agent Registry 与治理信息。这里看职责、边界、工具授权、输出结构和运行约束，不在页面自由编辑 Prompt。
+          </p>
+        </div>
+        <span className="chip chip-sage">{badge}</span>
+      </section>
 
       {error ? <p className="mb-3 text-sm text-[color:var(--warning)]">API 未连接：{error}</p> : null}
-      <div className="grid-3">
+
+      <div className="expert-toolbar">
+        <label className="expert-search">
+          <span>⌕</span>
+          <input aria-label="搜索专家" placeholder="搜索专家、工具或输出结构" />
+        </label>
+        <div className="expert-tabs" aria-label="专家层级筛选">
+          {layerTabs.map((tab, index) => (
+            <span key={tab} className={index === 0 ? "active" : ""}>
+              {tab}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="expert-card-grid">
         {experts.map((expert) => (
-          <article key={expert.id} className="panel p-4">
-            <span className="chip chip-sage">{expert.layer}</span>
-            <h2 className="card-title mt-4">{expert.name}</h2>
-            <p className="mt-3 text-sm leading-6 text-black/60">{expert.role}</p>
-            <div className="mt-4 border-t border-[color:var(--line)] pt-4 text-xs leading-6 text-black/55">
-              <div>Tool scope: {expert.tools.join(", ")}</div>
-              <div>Output: {expert.outputSchema}</div>
+          <Link key={expert.id} href={`/experts/${expert.id}`} className="expert-card">
+            <div>
+              <div className="expert-card-head">
+                <h2>{expert.name}</h2>
+                <span className="level-badge">{shortLayer(expert.layer)}</span>
+              </div>
+              <p>{expert.role}</p>
             </div>
-          </article>
+
+            <div className="expert-meta-tags">
+              {metaFor(expert).map((meta) => (
+                <span key={meta}>{meta}</span>
+              ))}
+            </div>
+
+            <div className="expert-model-row">
+              <span>默认模型</span>
+              <span className="model-pill">默认模型</span>
+            </div>
+
+            <div className="tool-mini-list">
+              {expert.tools.slice(0, 3).map((tool) => (
+                <span key={tool.key} className={tool.status === "allowed" ? "allowed" : "disabled"}>
+                  {tool.name} · {toolStatusLabel(tool.status)}
+                </span>
+              ))}
+            </div>
+          </Link>
         ))}
       </div>
     </div>

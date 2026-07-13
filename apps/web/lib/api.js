@@ -46,8 +46,14 @@ export function toExpertCard(expert) {
     id: expert.id,
     name: expert.name,
     layer: expert.layer,
-    role: expert.role,
-    tools: expert.tool_scope,
-    outputSchema: expert.output_schema
+    role: expert.responsibility || expert.role,
+    tools: expert.tool_permissions || expert.tool_scope || [],
+    outputSchema: expert.output_pack_type || expert.output_schema,
+    supportsMultiInstance: Boolean(expert.supports_multi_instance),
+    instanceStrategy: expert.instance_strategy || ""
   };
+}
+
+export function toolStatusLabel(status) {
+  return status === "allowed" ? "允许" : "禁用";
 }
