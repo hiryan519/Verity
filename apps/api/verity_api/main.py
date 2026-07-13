@@ -30,6 +30,7 @@ from .expert_execution_contracts import (
     get_execution_contract,
     list_execution_contracts,
 )
+from .llm_execution import get_llm_provider_status, prepare_llm_expert_execution
 from .mock_data import MOCK_NAVIGATION
 from .qa import run_qa_gate
 from .system_module_registry import (
@@ -69,6 +70,10 @@ class KnowledgeCitationRequest(BaseModel):
 
 class MemorySignalRequest(BaseModel):
     signal: str
+
+
+class LLMExpertExecutionRequest(BaseModel):
+    input_payload: dict = Field(default_factory=dict)
 
 
 @asynccontextmanager
@@ -174,6 +179,22 @@ def expert_execution_contracts() -> dict:
 @app.get("/api/expert-execution-contracts/{expert_id}")
 def expert_execution_contract_detail(expert_id: str) -> dict:
     return {"data_source": EXECUTION_CONTRACT_SOURCE, "item": get_execution_contract(expert_id)}
+
+
+@app.get("/api/llm/status")
+def llm_status() -> dict:
+    return {
+        "data_source": {"mode": "llm-provider-status", "is_real_workflow": False},
+        "item": get_llm_provider_status(),
+    }
+
+
+@app.post("/api/llm/experts/{expert_id}/prepare")
+def llm_expert_prepare(expert_id: str, payload: LLMExpertExecutionRequest) -> dict:
+    return {
+        "data_source": {"mode": "llm-execution-boundary", "is_real_workflow": False},
+        "item": prepare_llm_expert_execution(expert_id, payload.input_payload),
+    }
 
 
 @app.get("/api/experts/{expert_id}/runtime-context")

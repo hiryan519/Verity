@@ -1,7 +1,7 @@
 # AI Product Research Agent Console TODO
 
 版本：v0.1  
-状态：P3.4 最小实现已完成，B3.1-B3.6 已完成，下一步进入 B3.7 LLM-backed expert execution
+状态：P3.4 最小实现已完成，B3.1-B3.6 已完成，B3.7 LLM execution boundary 已完成；真实 provider 调用待配置后继续
 关联文档：`docs/AI_Product_Research_Agent_PRD.md`、`docs/ARCHITECTURE.md`、`docs/DECISION_LOG.md`、`docs/MECHANISM.md`、`docs/DESIGN.md`
 
 ## 文档分工
@@ -36,26 +36,26 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - TODO 中的“状态”必须同时说明已完成能力和未完成边界，避免把 mock / wrapper 误读为真实能力。
 - 机制细节以 `docs/MECHANISM.md` 为准；TODO 只保留开发必须知道的摘要和链接。
 
-## 当前下一步：B3.7 LLM-backed expert execution
+## 当前下一步：B3.7 真实 provider 调用
 
 目标：
 
-- 在不伪装真实能力的前提下，建立 LLM-backed expert execution 的最小接入边界。
-- 当 LLM provider 未配置时，系统必须明确返回不可用状态，不回退成伪真实执行。
-- 当 LLM provider 配置完成后，至少支持 3 类专家输出结构化结果，并写入 Trace / Analysis Pack / QA Gate。
+- 配置真实 LLM provider、模型和 API key。
+- 在已建立的 LLM execution boundary 上实现真实专家调用。
+- 至少支持 3 类专家输出结构化结果，并写入 Trace / Analysis Pack / QA Gate。
 
 建议影响文件：
 
-- `apps/api/verity_api/`：新增或扩展 LLM provider adapter、expert execution service、状态 API。
+- `apps/api/verity_api/`：继续扩展 LLM provider adapter、expert execution service、Trace 写入和结构化结果落库。
 - `apps/api/tests/`：新增 LLM provider 未配置、结构化 schema、边界标识测试。
-- `docs/TODO.md`：完成后更新 B3.7 状态或记录阻塞条件。
+- `docs/TODO.md`：完成后更新 B3.7 状态。
 
 验收标准：
 
-- 未配置真实 provider 时，接口返回 `available=false` 和明确原因。
-- 不把 deterministic wrapper 或 mock seed 包装成 LLM-backed execution。
+- 未配置真实 provider 时，接口返回 `available=false` 和明确原因。状态：已完成。
+- 不把 deterministic wrapper 或 mock seed 包装成 LLM-backed execution。状态：已完成。
 - 执行请求必须绑定 Expert Registry、Execution Contract、Memory / Skill Context 和 Trace 边界。
-- 如无法完成真实 provider 调用，必须在状态中标注为 blocked / provider_not_configured。
+- 真实 provider 配置完成后，至少 3 类专家输出结构化结果，并进入 Trace / Analysis Pack / QA Gate。
 
 ## Phase 0：开发前确认
 
@@ -634,7 +634,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - B3.4 Prompt / schema 草稿：基于 Expert Registry 为各专家生成 LLM-backed execution 的输入输出 schema 和 prompt fragment，但不把 prompt 暴露为页面可自由编辑项。状态：已完成，见 `apps/api/verity_api/expert_execution_contracts.py`。
 - B3.5 并行执行增强：按竞品、维度、Evidence Slice、Claim 数量和 token 预算拆分同类型专家实例，并将 fragment 合并为稳定 Pack。状态：已完成，见 `apps/api/verity_api/expert_instance_planner.py`。
 - B3.6 Memory / Skill 接入：将 active memory 以受控 checklist / prompt context 注入目标专家；candidate memory 只按目标专家低权重试用；Skill 只使用经过治理的版本化方法。状态：已完成，见 `apps/api/verity_api/expert_context.py`。
-- B3.7 LLM-backed expert execution：逐步替换 deterministic expert wrapper，至少让 3 类专家输出真实结构化结果，并写入 Trace / Analysis Pack / QA Gate。
+- B3.7 LLM-backed expert execution：逐步替换 deterministic expert wrapper，至少让 3 类专家输出真实结构化结果，并写入 Trace / Analysis Pack / QA Gate。状态：已完成 provider 状态与 execution boundary，未配置真实 provider 时会明确 blocked，不会回退为 mock；真实 provider 调用待继续。
 
 验收标准：
 
@@ -644,7 +644,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - B3.5：至少 2 个同类型专家实例可并行执行并合并 fragment。
 - B3.7：至少 3 个专家输出真实结构化结果，且可追溯到 Trace 和 Analysis Pack。
 
-状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.6 已完成，下一步优先执行 B3.7 LLM-backed expert execution。当前完成 deterministic local-db wrapper，尚未完成真实 LLM-backed expert execution。
+状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.6 已完成，B3.7 已完成 provider boundary。当前完成 deterministic local-db wrapper 和 LLM provider readiness 检查，尚未完成真实 provider 调用与真实结构化专家输出落库。
 
 ### B4 知识库作为证据源增强
 
