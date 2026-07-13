@@ -23,6 +23,7 @@ from .db import (
     update_memory_status,
 )
 from .evolva_adapter import EvolvaAdapter
+from .expert_context import build_expert_context_from_db
 from .expert_registry import EXPERT_REGISTRY_SOURCE, get_expert_contract, list_expert_contracts
 from .expert_execution_contracts import (
     EXECUTION_CONTRACT_SOURCE,
@@ -173,6 +174,11 @@ def expert_execution_contracts() -> dict:
 @app.get("/api/expert-execution-contracts/{expert_id}")
 def expert_execution_contract_detail(expert_id: str) -> dict:
     return {"data_source": EXECUTION_CONTRACT_SOURCE, "item": get_execution_contract(expert_id)}
+
+
+@app.get("/api/experts/{expert_id}/runtime-context")
+def expert_runtime_context(expert_id: str) -> dict:
+    return {"data_source": DATA_SOURCE, "item": build_expert_context_from_db(expert_id)}
 
 
 @app.get("/api/evidence")
