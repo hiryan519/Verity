@@ -1,7 +1,7 @@
 # AI Product Research Agent Console TODO
 
 版本：v0.1  
-状态：P3.4 最小实现已完成，B3.1 / B3.2 Expert Registry 与只读 API 已完成，下一步进入 B3.3 系统模块契约  
+状态：P3.4 最小实现已完成，B3.1 / B3.2 Expert Registry、B3.3 系统模块契约已完成，下一步进入 B3.4 Prompt / schema 草稿
 关联文档：`docs/AI_Product_Research_Agent_PRD.md`、`docs/ARCHITECTURE.md`、`docs/DECISION_LOG.md`、`docs/MECHANISM.md`、`docs/DESIGN.md`
 
 ## 文档分工
@@ -36,25 +36,25 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - TODO 中的“状态”必须同时说明已完成能力和未完成边界，避免把 mock / wrapper 误读为真实能力。
 - 机制细节以 `docs/MECHANISM.md` 为准；TODO 只保留开发必须知道的摘要和链接。
 
-## 当前下一步：B3.3 系统模块契约
+## 当前下一步：B3.4 Prompt / schema 草稿
 
 目标：
 
-- 将 `docs/MECHANISM.md` 中已确认的 Evidence Router / Evidence Slice、QA Brief Builder、Report Renderer 转成工程可读取的系统模块契约。
-- 明确这些模块不是专家本体，不出现在专家公会的专家类型列表中，但会被 workflow、Trace 和后续 UI 治理视图引用。
+- 基于 Expert Registry 为各专家生成 LLM-backed execution 所需的输入输出 schema 和 prompt fragment 草稿。
+- Prompt fragment 作为工程配置 / 运行契约使用，不在专家公会页面暴露为可自由编辑项。
 
 建议影响文件：
 
-- `apps/api/verity_api/`：新增或扩展系统模块注册表配置、schema、只读 API 或内部访问函数。
-- `apps/api/tests/`：新增系统模块契约测试。
-- `docs/TODO.md`：完成后更新 B3.3 状态。
+- `apps/api/verity_api/`：新增或扩展专家执行 contract、schema 或 prompt fragment 配置。
+- `apps/api/tests/`：新增 prompt/schema contract 测试。
+- `docs/TODO.md`：完成后更新 B3.4 状态。
 
 验收标准：
 
-- 系统模块契约至少包含 Evidence Router / Evidence Slice、QA Brief Builder、Report Renderer。
-- 每个模块说明输入、输出、是否使用 LLM、是否对用户展示、Trace 记录要求和边界。
-- Expert Registry 与系统模块注册表区分清楚。
-- 测试能验证系统模块不会混入 `/api/experts` 专家类型列表。
+- 每类专家具备独立输入 schema、输出 schema 和 prompt fragment 草稿。
+- schema 与 Expert Registry 的 output Pack 类型对齐。
+- prompt fragment 明确证据边界、Memory/Skill 边界、工具权限和禁止事项。
+- 测试能验证 prompt/schema 不把系统模块当专家、不把 mock 能力包装成真实在线能力。
 
 ## Phase 0：开发前确认
 
@@ -629,7 +629,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 
 - B3.1 Expert Registry：将已确认的专家契约落成只读专家注册表，包括研究编排专家、证据采集专家、产品分析专家、定价策略专家、用户体验分析专家、交叉验证专家、QA 质检专家、报告撰写专家。状态：已完成，见 `apps/api/verity_api/expert_registry.py`。
 - B3.2 Expert Registry API：提供 `/api/experts` 与 `/api/experts/{id}`，返回中文名称、层级、职责、行为边界、工具权限、输出 Pack 类型、是否支持多实例、Memory / Skill 治理摘要。状态：已完成，已覆盖 API 测试。
-- B3.3 系统模块契约：为 Evidence Router / Evidence Slice、QA Brief Builder、Report Renderer 建立工程配置或 schema，明确它们不是专家本体。
+- B3.3 系统模块契约：为 Evidence Router / Evidence Slice、QA Brief Builder、Report Renderer 建立工程配置或 schema，明确它们不是专家本体。状态：已完成，见 `apps/api/verity_api/system_module_registry.py`。
 - B3.4 Prompt / schema 草稿：基于 Expert Registry 为各专家生成 LLM-backed execution 的输入输出 schema 和 prompt fragment，但不把 prompt 暴露为页面可自由编辑项。
 - B3.5 并行执行增强：按竞品、维度、Evidence Slice、Claim 数量和 token 预算拆分同类型专家实例，并将 fragment 合并为稳定 Pack。
 - B3.6 Memory / Skill 接入：将 active memory 以受控 checklist / prompt context 注入目标专家；candidate memory 只按目标专家低权重试用；Skill 只使用经过治理的版本化方法。
@@ -643,7 +643,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - B3.5：至少 2 个同类型专家实例可并行执行并合并 fragment。
 - B3.7：至少 3 个专家输出真实结构化结果，且可追溯到 Trace 和 Analysis Pack。
 
-状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1 / B3.2 已完成，下一步优先执行 B3.3 系统模块契约。当前完成 deterministic local-db wrapper，尚未完成真实 LLM-backed expert execution。
+状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1 / B3.2 / B3.3 已完成，下一步优先执行 B3.4 Prompt / schema 草稿。当前完成 deterministic local-db wrapper，尚未完成真实 LLM-backed expert execution。
 
 ### B4 知识库作为证据源增强
 

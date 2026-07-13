@@ -26,6 +26,11 @@ from .evolva_adapter import EvolvaAdapter
 from .expert_registry import EXPERT_REGISTRY_SOURCE, get_expert_contract, list_expert_contracts
 from .mock_data import MOCK_NAVIGATION
 from .qa import run_qa_gate
+from .system_module_registry import (
+    SYSTEM_MODULE_REGISTRY_SOURCE,
+    get_system_module_contract,
+    list_system_module_contracts,
+)
 from .verity_experts import VerityExpertRunner
 
 
@@ -143,6 +148,16 @@ def experts() -> dict:
 @app.get("/api/experts/{expert_id}")
 def expert_detail(expert_id: str) -> dict:
     return {"data_source": EXPERT_REGISTRY_SOURCE, "item": get_expert_contract(expert_id)}
+
+
+@app.get("/api/system-modules")
+def system_modules() -> dict:
+    return {"data_source": SYSTEM_MODULE_REGISTRY_SOURCE, "items": list_system_module_contracts()}
+
+
+@app.get("/api/system-modules/{module_id}")
+def system_module_detail(module_id: str) -> dict:
+    return {"data_source": SYSTEM_MODULE_REGISTRY_SOURCE, "item": get_system_module_contract(module_id)}
 
 
 @app.get("/api/evidence")
