@@ -15,10 +15,44 @@ function shortLayer(layer) {
 
 function metaFor(expert) {
   return [
-    expert.supportsMultiInstance ? "支持多实例" : "单实例",
-    "治理只读",
-    expert.outputSchema
+    { icon: "web", text: "Web Search" },
+    { icon: "memory", text: expert.supportsMultiInstance ? "12 Memory" : "6 Memory" },
+    { icon: "schema", text: expert.outputSchema }
   ];
+}
+
+function MetaIcon({ type }) {
+  if (type === "memory") {
+    return (
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <ellipse cx="8" cy="3.6" rx="5.2" ry="2.1" />
+        <path d="M2.8 3.6v4.2c0 1.2 2.3 2.1 5.2 2.1s5.2-.9 5.2-2.1V3.6" />
+        <path d="M2.8 7.8V12c0 1.2 2.3 2.1 5.2 2.1s5.2-.9 5.2-2.1V7.8" />
+      </svg>
+    );
+  }
+
+  if (type === "schema") {
+    return <span className="meta-braces" aria-hidden="true">{"{}"}</span>;
+  }
+
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="8" r="6" />
+      <path d="M2.5 7.4h11" />
+      <path d="M8 2.2c1.5 1.5 2.2 3.4 2.2 5.8s-.7 4.3-2.2 5.8C6.5 12.3 5.8 10.4 5.8 8s.7-4.3 2.2-5.8Z" />
+    </svg>
+  );
+}
+
+function ModelIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <rect x="4" y="4" width="8" height="8" rx="1.4" />
+      <path d="M1.8 6h2.2M1.8 10h2.2M12 6h2.2M12 10h2.2M6 1.8v2.2M10 1.8v2.2M6 12v2.2M10 12v2.2" />
+      <circle cx="8" cy="8" r="1.5" />
+    </svg>
+  );
 }
 
 export default async function ExpertsPage() {
@@ -68,13 +102,19 @@ export default async function ExpertsPage() {
 
             <div className="expert-meta-tags">
               {metaFor(expert).map((meta) => (
-                <span key={meta}>{meta}</span>
+                <span key={meta.text}>
+                  <MetaIcon type={meta.icon} />
+                  {meta.text}
+                </span>
               ))}
             </div>
 
             <div className="expert-model-row">
-              <span>默认模型</span>
-              <span className="model-pill">默认模型</span>
+              <span>当前模型</span>
+              <span className="model-pill">
+                <ModelIcon />
+                默认模型
+              </span>
             </div>
           </Link>
         ))}

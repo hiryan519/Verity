@@ -379,7 +379,7 @@ button {
   border-radius: 999px;
   color: rgba(51, 51, 51, 0.58);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .expert-tabs span.active {
@@ -443,25 +443,48 @@ button {
   background: var(--sage-light);
   color: #607a64;
   font-size: 11px;
-  font-weight: 500;
+  gap: 6px;
+  font-weight: 600;
   white-space: nowrap;
+}
+
+.model-pill svg,
+.expert-meta-tags svg,
+.permission-status svg,
+.memory-item small svg,
+.skill-item svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .expert-meta-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 10px;
 }
 
 .expert-meta-tags span {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   min-height: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  color: rgba(51, 51, 51, 0.58);
-  font-size: 11px;
+  padding: 0;
+  border: 0;
+  color: rgba(51, 51, 51, 0.54);
+  font-size: 12px;
+}
+
+.meta-braces {
+  color: rgba(51, 51, 51, 0.42);
+  font-family: Georgia, serif;
+  font-size: 15px;
+  line-height: 1;
 }
 
 .expert-model-row {
@@ -480,6 +503,9 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  min-height: 62px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
 }
 
 .expert-crumb {
@@ -508,24 +534,39 @@ button {
   font-weight: 500;
 }
 
+.expert-governance-frame {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 253, 0.92);
+}
+
 .expert-config-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.42fr) minmax(300px, 0.78fr);
-  gap: 12px;
+  gap: 0;
 }
 
 .expert-logic,
 .expert-assets {
   display: grid;
-  gap: 12px;
+  gap: 0;
   align-content: start;
+}
+
+.expert-assets {
+  border-left: 1px solid var(--line);
 }
 
 .config-block {
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.config-block + .config-block {
+  border-top: 1px solid var(--line);
 }
 
 .config-title {
@@ -563,9 +604,9 @@ button {
   margin: 0;
   white-space: pre-wrap;
   color: rgba(51, 51, 51, 0.72);
-  font-family: Inter, system-ui, sans-serif;
-  font-size: 12px;
-  line-height: 1.78;
+  font-family: "Noto Serif SC", Georgia, serif;
+  font-size: 13px;
+  line-height: 1.82;
 }
 
 .tool-list,
@@ -586,6 +627,10 @@ button {
   background: #fdfdfb;
 }
 
+.tool-row > div {
+  min-width: 0;
+}
+
 .tool-row strong {
   display: block;
   font-size: 13px;
@@ -604,12 +649,15 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  justify-content: center;
   min-height: 26px;
+  min-width: 64px;
   padding: 0 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .permission-status.allowed {
@@ -620,18 +668,6 @@ button {
 .permission-status.disabled {
   color: rgba(51, 51, 51, 0.46);
   background: #f4f4f1;
-}
-
-.permission-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  margin: 0;
-  font-size: 12px;
-  line-height: 1;
-  color: currentColor;
 }
 
 .memory-tabs {
@@ -692,16 +728,30 @@ button {
   display: block;
   margin-top: 8px;
   color: rgba(51, 51, 51, 0.62);
-  font-size: 12px;
-  line-height: 1.62;
+  font-family: "Noto Serif SC", Georgia, serif;
+  font-size: 13px;
+  line-height: 1.72;
 }
 
 .memory-item small {
-  display: block;
+  display: grid;
+  gap: 5px;
   margin-top: 8px;
   color: var(--muted);
   font-size: 11px;
   line-height: 1.5;
+}
+
+.memory-item small span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skill-item strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
 }
 
 @media (max-width: 1180px) {
@@ -729,6 +779,11 @@ button {
   .expert-card-grid,
   .expert-config-grid {
     grid-template-columns: 1fr;
+  }
+
+  .expert-assets {
+    border-top: 1px solid var(--line);
+    border-left: 0;
   }
 }
 

@@ -46,6 +46,50 @@ const visualSkills = [
   }
 ];
 
+function StatusIcon({ status }) {
+  if (status === "allowed") {
+    return (
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M3.2 8.2 6.4 11.4 12.8 4.8" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <rect x="4.2" y="7" width="7.6" height="5.8" rx="1.2" />
+      <path d="M5.8 7V5.4a2.2 2.2 0 0 1 4.4 0V7" />
+    </svg>
+  );
+}
+
+function MemoryMetaIcon({ type }) {
+  if (type === "impact") {
+    return (
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M8 2.2v11.6M2.2 8h11.6" />
+        <circle cx="8" cy="8" r="4.8" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M4.2 2.8h5.6l2 2v8.4H4.2z" />
+      <path d="M9.8 2.8v2h2" />
+      <path d="M6 8h4M6 10.4h3" />
+    </svg>
+  );
+}
+
+function SkillIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 2.2 10 6l3.8.6-2.8 2.7.7 3.8L8 11.3 4.3 13l.7-3.8-2.8-2.7L6 6z" />
+    </svg>
+  );
+}
+
 export default async function ExpertDetailPage({ params }) {
   const { id } = await params;
   const { item: expert, error } = await getApiData(`/api/experts/${id}`);
@@ -65,24 +109,25 @@ export default async function ExpertDetailPage({ params }) {
 
   return (
     <div className="expert-page-shell">
-      <header className="expert-detail-head">
-        <div className="expert-crumb">
-          <Link href="/experts" className="expert-button">‹ 返回</Link>
-          <span>专家公会</span>
-          <span>/</span>
-          <strong>{expert.name}</strong>
-        </div>
-      </header>
+      <section className="expert-governance-frame">
+        <header className="expert-detail-head">
+          <div className="expert-crumb">
+            <Link href="/experts" className="expert-button">‹ 返回</Link>
+            <span>专家公会</span>
+            <span>/</span>
+            <strong>{expert.name}</strong>
+          </div>
+        </header>
 
-      <div className="expert-config-grid">
-        <div className="expert-logic">
-          <section className="config-block">
-            <div className="config-title">
-              <h2>专家行为规则</h2>
-              <span>只读治理视图 · 底座 Prompt 不直接暴露</span>
-            </div>
-            <div className="code-panel">
-              <pre>{`专家：${expert.name}
+        <div className="expert-config-grid">
+          <div className="expert-logic">
+            <section className="config-block">
+              <div className="config-title">
+                <h2>专家行为规则</h2>
+                <span>只读治理视图 · 底座 Prompt 不直接暴露</span>
+              </div>
+              <div className="code-panel">
+                <pre>{`专家：${expert.name}
 当前模型：默认模型
 层级：${expert.layer}
 定位：${expert.responsibility}
@@ -92,81 +137,94 @@ ${expert.responsibilities.map((item) => `- ${item}`).join("\n")}
 
 行为边界：
 ${expert.boundaries.map((item) => `- ${item}`).join("\n")}`}</pre>
-            </div>
-          </section>
+              </div>
+            </section>
 
-          <section className="config-block">
-            <div className="config-title">
-              <h2>输出结构约束</h2>
-              <span>只读 Schema 摘要 · 修改需工程校验</span>
-            </div>
-            <div className="code-panel">
-              <pre>{safeJson(expert.output_contract)}</pre>
-            </div>
-          </section>
+            <section className="config-block">
+              <div className="config-title">
+                <h2>输出结构约束</h2>
+                <span>只读 Schema 摘要 · 修改需工程校验</span>
+              </div>
+              <div className="code-panel">
+                <pre>{safeJson(expert.output_contract)}</pre>
+              </div>
+            </section>
 
-          <section className="config-block">
-            <div className="config-title">
-              <h2>工具权限清单</h2>
-              <span>系统内置工具授权，不支持页面新增工具</span>
-            </div>
-            <div className="tool-list">
-              {expert.tool_permissions.map((tool) => (
-                <div key={tool.key} className="tool-row">
-                  <div>
-                    <strong>{tool.name}</strong>
-                    <span>{tool.description}</span>
+            <section className="config-block">
+              <div className="config-title">
+                <h2>工具权限清单</h2>
+                <span>系统内置工具授权，不支持页面新增工具</span>
+              </div>
+              <div className="tool-list">
+                {expert.tool_permissions.map((tool) => (
+                  <div key={tool.key} className="tool-row">
+                    <div>
+                      <strong>{tool.name}</strong>
+                      <span>{tool.description}</span>
+                    </div>
+                    <span className={`permission-status ${statusClass(tool.status)}`}>
+                      <StatusIcon status={tool.status} />
+                      {toolStatusLabel(tool.status)}
+                    </span>
                   </div>
-                  <span className={`permission-status ${statusClass(tool.status)}`}>
-                    <span className="permission-icon">{tool.status === "allowed" ? "✓" : "▢"}</span>
-                    {toolStatusLabel(tool.status)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <aside className="expert-assets">
+            <section className="config-block">
+              <div className="config-title">
+                <h2>Memory 治理视图</h2>
+                <span>只展示来源、状态和影响</span>
+              </div>
+              <div className="memory-tabs">
+                <span className="active">Active Memory</span>
+                <span>Candidate</span>
+              </div>
+              <div className="memory-list">
+                {visualMemories.map((memory) => (
+                  <article key={memory.id} className="memory-item">
+                    <div className="memory-item-head">
+                      <strong>{memory.name}</strong>
+                      <span>{memory.confidence}</span>
+                    </div>
+                    <p>{memory.content}</p>
+                    <small>
+                      <span>
+                        <MemoryMetaIcon type="source" />
+                        来源：{memory.source}
+                      </span>
+                      <span>
+                        <MemoryMetaIcon type="impact" />
+                        影响对象：{memory.impact}
+                      </span>
+                    </small>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="config-block">
+              <div className="config-title">
+                <h2>挂载 Skill</h2>
+                <span>能力摘要，不在此编辑源码</span>
+              </div>
+              <div className="memory-list">
+                {visualSkills.map((skill) => (
+                  <article key={skill.id} className="skill-item">
+                    <strong>
+                      <SkillIcon />
+                      {skill.name} · {skill.version}
+                    </strong>
+                    <span>{skill.summary}</span>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </aside>
         </div>
-
-        <aside className="expert-assets">
-          <section className="config-block">
-            <div className="config-title">
-              <h2>Memory 治理视图</h2>
-              <span>只展示来源、状态和影响</span>
-            </div>
-            <div className="memory-tabs">
-              <span className="active">Active Memory</span>
-              <span>Candidate</span>
-            </div>
-            <div className="memory-list">
-              {visualMemories.map((memory) => (
-                <article key={memory.id} className="memory-item">
-                  <div className="memory-item-head">
-                    <strong>{memory.name}</strong>
-                    <span>{memory.confidence}</span>
-                  </div>
-                  <p>{memory.content}</p>
-                  <small>来源：{memory.source} · 影响对象：{memory.impact}</small>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="config-block">
-            <div className="config-title">
-              <h2>挂载 Skill</h2>
-              <span>能力摘要，不在此编辑源码</span>
-            </div>
-            <div className="memory-list">
-              {visualSkills.map((skill) => (
-                <article key={skill.id} className="skill-item">
-                  <strong>{skill.name} · {skill.version}</strong>
-                  <span>{skill.summary}</span>
-                </article>
-              ))}
-            </div>
-          </section>
-        </aside>
-      </div>
+      </section>
     </div>
   );
 }
