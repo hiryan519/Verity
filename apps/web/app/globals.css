@@ -394,12 +394,11 @@ button {
 }
 
 .expert-card {
-  min-height: 188px;
+  min-height: 190px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 13px;
-  padding: 16px;
+  padding: 20px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
@@ -407,7 +406,7 @@ button {
 }
 
 .expert-card:hover {
-  border-color: #cbd8cb;
+  border-color: rgba(120, 144, 122, 0.72);
   transform: translateY(-1px);
 }
 
@@ -415,37 +414,43 @@ button {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .expert-card h2 {
   margin: 0;
+  color: var(--ink);
   font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
   line-height: 1.45;
 }
 
 .expert-card p {
-  margin: 9px 0 0;
-  color: rgba(51, 51, 51, 0.62);
-  font-size: 12px;
-  line-height: 1.68;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.75;
 }
 
 .level-badge,
 .model-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
-  padding: 0 8px;
+  padding: 4px 8px;
   border-radius: 999px;
-  background: var(--sage-light);
-  color: #607a64;
+  background: rgba(234, 240, 234, 0.88);
+  color: var(--sage);
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
   font-size: 11px;
-  gap: 6px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
+}
+
+.model-pill {
+  gap: 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
 .model-pill svg,
@@ -465,28 +470,30 @@ button {
 
 .expert-meta-tags {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
+  margin-top: 18px;
 }
 
 .expert-meta-tags span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 22px;
+  gap: 5px;
   padding: 0;
   border: 0;
-  color: rgba(51, 51, 51, 0.46);
-  font-size: 11.5px;
+  color: rgba(51, 51, 51, 0.58);
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
+  font-size: 11px;
   font-weight: 400;
-  letter-spacing: 0.01em;
+  line-height: 1;
 }
 
 .expert-meta-tags svg {
-  width: 14px;
-  height: 14px;
-  stroke-width: 1.15;
-  opacity: 0.82;
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.35;
+  opacity: 1;
 }
 
 .meta-braces {
@@ -500,11 +507,12 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(229, 229, 229, 0.75);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .expert-detail-head {
