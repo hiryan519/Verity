@@ -1,7 +1,7 @@
 # AI Product Research Agent Console TODO
 
 版本：v0.1  
-状态：P3.4 最小实现已完成，B3.1-B3.4 已完成，下一步进入 B3.5 并行实例增强
+状态：P3.4 最小实现已完成，B3.1-B3.5 已完成，下一步进入 B3.6 Memory / Skill 接入
 关联文档：`docs/AI_Product_Research_Agent_PRD.md`、`docs/ARCHITECTURE.md`、`docs/DECISION_LOG.md`、`docs/MECHANISM.md`、`docs/DESIGN.md`
 
 ## 文档分工
@@ -36,25 +36,26 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - TODO 中的“状态”必须同时说明已完成能力和未完成边界，避免把 mock / wrapper 误读为真实能力。
 - 机制细节以 `docs/MECHANISM.md` 为准；TODO 只保留开发必须知道的摘要和链接。
 
-## 当前下一步：B3.5 并行实例增强
+## 当前下一步：B3.6 Memory / Skill 接入
 
 目标：
 
-- 按竞品、维度、Evidence Slice、Claim 数量和 token 预算拆分同类型专家实例。
-- 保证多实例输出最终合并为稳定 Pack，而不是散落 fragment。
+- 将 active memory 以受控 checklist / prompt context 注入目标专家。
+- Candidate memory 只按目标专家低权重试用，不作为事实依据。
+- Skill 只使用经过治理的版本化方法，不把普通能力伪装成 Skill。
 
 建议影响文件：
 
-- `apps/api/verity_api/`：新增或扩展并行实例规划与 fragment 合并模块。
-- `apps/api/tests/`：新增并行实例拆分 / 合并测试。
-- `docs/TODO.md`：完成后更新 B3.5 状态。
+- `apps/api/verity_api/`：新增或扩展 Memory / Skill context 组装模块。
+- `apps/api/tests/`：新增 active / candidate memory 与 skill context 测试。
+- `docs/TODO.md`：完成后更新 B3.6 状态。
 
 验收标准：
 
-- 至少 2 个同类型专家实例可根据 Evidence Slice 或章节拆分并行执行。
-- fragment 保留实例 ID、处理范围、输入 Evidence / Claim 范围和合并原因。
-- 合并结果保留 Claim / Evidence 追溯，不丢失 data_gap 或风险。
-- 测试能验证拆分不是为了堆 Agent 数量，而是由预算、维度或 Claim 数触发。
+- Active memory 进入目标专家的 checklist / prompt context，并记录来源。
+- Candidate memory 只作为 trial hint，必须带 “not fact evidence” 风险提示。
+- Skill context 只包含版本化、挂载到目标专家的方法摘要。
+- 测试能验证 Memory / Skill 不直接变成 Evidence 或强结论。
 
 ## Phase 0：开发前确认
 
@@ -631,7 +632,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - B3.2 Expert Registry API：提供 `/api/experts` 与 `/api/experts/{id}`，返回中文名称、层级、职责、行为边界、工具权限、输出 Pack 类型、是否支持多实例、Memory / Skill 治理摘要。状态：已完成，已覆盖 API 测试。
 - B3.3 系统模块契约：为 Evidence Router / Evidence Slice、QA Brief Builder、Report Renderer 建立工程配置或 schema，明确它们不是专家本体。状态：已完成，见 `apps/api/verity_api/system_module_registry.py`。
 - B3.4 Prompt / schema 草稿：基于 Expert Registry 为各专家生成 LLM-backed execution 的输入输出 schema 和 prompt fragment，但不把 prompt 暴露为页面可自由编辑项。状态：已完成，见 `apps/api/verity_api/expert_execution_contracts.py`。
-- B3.5 并行执行增强：按竞品、维度、Evidence Slice、Claim 数量和 token 预算拆分同类型专家实例，并将 fragment 合并为稳定 Pack。
+- B3.5 并行执行增强：按竞品、维度、Evidence Slice、Claim 数量和 token 预算拆分同类型专家实例，并将 fragment 合并为稳定 Pack。状态：已完成，见 `apps/api/verity_api/expert_instance_planner.py`。
 - B3.6 Memory / Skill 接入：将 active memory 以受控 checklist / prompt context 注入目标专家；candidate memory 只按目标专家低权重试用；Skill 只使用经过治理的版本化方法。
 - B3.7 LLM-backed expert execution：逐步替换 deterministic expert wrapper，至少让 3 类专家输出真实结构化结果，并写入 Trace / Analysis Pack / QA Gate。
 
@@ -643,7 +644,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - B3.5：至少 2 个同类型专家实例可并行执行并合并 fragment。
 - B3.7：至少 3 个专家输出真实结构化结果，且可追溯到 Trace 和 Analysis Pack。
 
-状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.4 已完成，下一步优先执行 B3.5 并行实例增强。当前完成 deterministic local-db wrapper，尚未完成真实 LLM-backed expert execution。
+状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.5 已完成，下一步优先执行 B3.6 Memory / Skill 接入。当前完成 deterministic local-db wrapper，尚未完成真实 LLM-backed expert execution。
 
 ### B4 知识库作为证据源增强
 
