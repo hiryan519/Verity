@@ -24,6 +24,11 @@ from .db import (
 )
 from .evolva_adapter import EvolvaAdapter
 from .expert_registry import EXPERT_REGISTRY_SOURCE, get_expert_contract, list_expert_contracts
+from .expert_execution_contracts import (
+    EXECUTION_CONTRACT_SOURCE,
+    get_execution_contract,
+    list_execution_contracts,
+)
 from .mock_data import MOCK_NAVIGATION
 from .qa import run_qa_gate
 from .system_module_registry import (
@@ -158,6 +163,16 @@ def system_modules() -> dict:
 @app.get("/api/system-modules/{module_id}")
 def system_module_detail(module_id: str) -> dict:
     return {"data_source": SYSTEM_MODULE_REGISTRY_SOURCE, "item": get_system_module_contract(module_id)}
+
+
+@app.get("/api/expert-execution-contracts")
+def expert_execution_contracts() -> dict:
+    return {"data_source": EXECUTION_CONTRACT_SOURCE, "items": list_execution_contracts()}
+
+
+@app.get("/api/expert-execution-contracts/{expert_id}")
+def expert_execution_contract_detail(expert_id: str) -> dict:
+    return {"data_source": EXECUTION_CONTRACT_SOURCE, "item": get_execution_contract(expert_id)}
 
 
 @app.get("/api/evidence")
