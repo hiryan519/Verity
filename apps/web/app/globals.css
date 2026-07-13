@@ -476,8 +476,17 @@ button {
   min-height: 22px;
   padding: 0;
   border: 0;
-  color: rgba(51, 51, 51, 0.54);
-  font-size: 12px;
+  color: rgba(51, 51, 51, 0.46);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.expert-meta-tags svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.15;
+  opacity: 0.82;
 }
 
 .meta-braces {
