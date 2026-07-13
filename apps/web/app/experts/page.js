@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getApiData, toExpertCard, toolStatusLabel } from "@/lib/api";
+import { getApiData, toExpertCard } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +14,9 @@ function shortLayer(layer) {
 }
 
 function metaFor(expert) {
-  const allowedTools = expert.tools.filter((tool) => tool.status === "allowed");
   return [
-    allowedTools.length ? `${allowedTools.length} 项工具允许` : "无外部工具",
     expert.supportsMultiInstance ? "支持多实例" : "单实例",
+    "治理只读",
     expert.outputSchema
   ];
 }
@@ -76,14 +75,6 @@ export default async function ExpertsPage() {
             <div className="expert-model-row">
               <span>默认模型</span>
               <span className="model-pill">默认模型</span>
-            </div>
-
-            <div className="tool-mini-list">
-              {expert.tools.slice(0, 3).map((tool) => (
-                <span key={tool.key} className={tool.status === "allowed" ? "allowed" : "disabled"}>
-                  {tool.name} · {toolStatusLabel(tool.status)}
-                </span>
-              ))}
             </div>
           </Link>
         ))}

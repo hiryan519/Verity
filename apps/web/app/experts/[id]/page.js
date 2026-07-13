@@ -12,12 +12,43 @@ function statusClass(status) {
   return status === "allowed" ? "allowed" : "disabled";
 }
 
+const visualMemories = [
+  {
+    id: "visual-memory-token-pricing",
+    name: "Token 维度比价",
+    confidence: "82%",
+    content: "比较 API 价格时必须换算同预算 token 可用量、调用次数和套餐限制。",
+    source: "用户批注",
+    impact: "定价分析任务"
+  },
+  {
+    id: "visual-memory-official-case-bias",
+    name: "官网案例偏差",
+    confidence: "76%",
+    content: "官网客户案例只能作为官方筛选样本，不能支撑自然用户体验结论。",
+    source: "QA 返工",
+    impact: "用户体验分析 / 证据绑定规则"
+  }
+];
+
+const visualSkills = [
+  {
+    id: "visual-skill-package-boundary",
+    name: "套餐边界拆解",
+    version: "v1.2",
+    summary: "当价格包含 seat、quota、API 调用额度时触发，用于生成可比性风险。"
+  },
+  {
+    id: "visual-skill-unit-price",
+    name: "单位价格归一",
+    version: "v0.8",
+    summary: "将订阅价、token、调用次数和团队席位拆成可对比维度。"
+  }
+];
+
 export default async function ExpertDetailPage({ params }) {
   const { id } = await params;
-  const [{ item: expert, error }, { item: runtimeContext }] = await Promise.all([
-    getApiData(`/api/experts/${id}`),
-    getApiData(`/api/experts/${id}/runtime-context`)
-  ]);
+  const { item: expert, error } = await getApiData(`/api/experts/${id}`);
 
   if (!expert) {
     return (
@@ -31,10 +62,6 @@ export default async function ExpertDetailPage({ params }) {
       </div>
     );
   }
-
-  const activeMemories = runtimeContext?.checklist_context || [];
-  const candidateHints = runtimeContext?.trial_hints || [];
-  const mountedSkills = runtimeContext?.mounted_skills || [];
 
   return (
     <div className="expert-page-shell">
@@ -91,6 +118,7 @@ ${expert.boundaries.map((item) => `- ${item}`).join("\n")}`}</pre>
                     <span>{tool.description}</span>
                   </div>
                   <span className={`permission-status ${statusClass(tool.status)}`}>
+                    <span className="permission-icon">{tool.status === "allowed" ? "✓" : "▢"}</span>
                     {toolStatusLabel(tool.status)}
                   </span>
                 </div>
@@ -110,35 +138,16 @@ ${expert.boundaries.map((item) => `- ${item}`).join("\n")}`}</pre>
               <span>Candidate</span>
             </div>
             <div className="memory-list">
-              {[...activeMemories, ...candidateHints].length ? (
-                <>
-                  {activeMemories.map((memory) => (
-                    <article key={memory.memory_id} className="memory-item">
-                      <div className="memory-item-head">
-                        <strong>Active · {memory.effect_strategy}</strong>
-                        <span>Not Evidence</span>
-                      </div>
-                      <p>{memory.content}</p>
-                      <small>来源：{memory.source_type || "unknown"}</small>
-                    </article>
-                  ))}
-                  {candidateHints.map((memory) => (
-                    <article key={memory.memory_id} className="memory-item">
-                      <div className="memory-item-head">
-                        <strong>Candidate · 试用提示</strong>
-                        <span>低权重</span>
-                      </div>
-                      <p>{memory.content}</p>
-                      <small>{memory.risk_note}</small>
-                    </article>
-                  ))}
-                </>
-              ) : (
-                <article className="empty-governance">
-                  <strong>暂无运行记忆</strong>
-                  <span>当前专家没有可展示的 active memory 或 candidate trial hint。</span>
+              {visualMemories.map((memory) => (
+                <article key={memory.id} className="memory-item">
+                  <div className="memory-item-head">
+                    <strong>{memory.name}</strong>
+                    <span>{memory.confidence}</span>
+                  </div>
+                  <p>{memory.content}</p>
+                  <small>来源：{memory.source} · 影响对象：{memory.impact}</small>
                 </article>
-              )}
+              ))}
             </div>
           </section>
 
@@ -148,19 +157,12 @@ ${expert.boundaries.map((item) => `- ${item}`).join("\n")}`}</pre>
               <span>能力摘要，不在此编辑源码</span>
             </div>
             <div className="memory-list">
-              {mountedSkills.length ? (
-                mountedSkills.map((skill) => (
-                  <article key={skill.skill_id} className="skill-item">
-                    <strong>{skill.name} · {skill.version}</strong>
-                    <span>{skill.summary}</span>
-                  </article>
-                ))
-              ) : (
-                <article className="empty-governance">
-                  <strong>暂无挂载 Skill</strong>
-                  <span>P0 只展示经治理的挂载关系，当前未配置版本化 Skill。</span>
+              {visualSkills.map((skill) => (
+                <article key={skill.id} className="skill-item">
+                  <strong>{skill.name} · {skill.version}</strong>
+                  <span>{skill.summary}</span>
                 </article>
-              )}
+              ))}
             </div>
           </section>
         </aside>

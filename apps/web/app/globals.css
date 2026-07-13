@@ -303,49 +303,51 @@ button {
 
 .expert-page-shell {
   display: grid;
-  gap: 18px;
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  gap: 16px;
 }
 
 .expert-hero {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
-  padding-bottom: 4px;
+  gap: 20px;
+  padding: 6px 0 2px;
 }
 
 .expert-hero h1 {
   margin: 0;
   font-family: "Noto Serif SC", Georgia, serif;
-  font-size: clamp(34px, 4vw, 52px);
+  font-size: clamp(28px, 3vw, 38px);
   font-weight: 500;
-  line-height: 1.36;
+  line-height: 1.32;
 }
 
 .expert-hero p:not(.eyebrow) {
-  max-width: 760px;
-  margin: 10px 0 0;
+  max-width: 720px;
+  margin: 8px 0 0;
   color: rgba(51, 51, 51, 0.64);
-  font-size: 14px;
-  line-height: 1.75;
+  font-size: 13px;
+  line-height: 1.7;
 }
 
 .expert-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
 }
 
 .expert-search {
-  min-height: 42px;
-  width: min(440px, 100%);
+  min-height: 38px;
+  width: min(390px, 100%);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 14px;
+  gap: 9px;
+  padding: 0 12px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--muted);
 }
@@ -362,42 +364,42 @@ button {
 .expert-tabs {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px;
+  gap: 4px;
+  padding: 3px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 999px;
   background: var(--surface);
 }
 
 .expert-tabs span {
-  min-height: 30px;
+  min-height: 28px;
   display: inline-flex;
   align-items: center;
-  padding: 0 10px;
-  border-radius: 7px;
+  padding: 0 12px;
+  border-radius: 999px;
   color: rgba(51, 51, 51, 0.58);
   font-size: 12px;
   font-weight: 500;
 }
 
 .expert-tabs span.active {
-  color: var(--sage);
+  color: #58715c;
   background: var(--sage-light);
 }
 
 .expert-card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .expert-card {
-  min-height: 250px;
+  min-height: 188px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 18px;
-  padding: 18px;
+  gap: 13px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
@@ -413,74 +415,61 @@ button {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .expert-card h2 {
   margin: 0;
-  font-family: "Noto Serif SC", Georgia, serif;
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 1.5;
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .expert-card p {
-  margin: 12px 0 0;
+  margin: 9px 0 0;
   color: rgba(51, 51, 51, 0.62);
-  font-size: 13px;
-  line-height: 1.72;
+  font-size: 12px;
+  line-height: 1.68;
 }
 
 .level-badge,
 .model-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
+  min-height: 22px;
   padding: 0 8px;
-  border-radius: 6px;
+  border-radius: 999px;
   background: var(--sage-light);
-  color: var(--sage);
-  font-size: 12px;
+  color: #607a64;
+  font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
 }
 
-.expert-meta-tags,
-.tool-mini-list {
+.expert-meta-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 6px;
 }
 
-.expert-meta-tags span,
-.tool-mini-list span {
+.expert-meta-tags span {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
+  min-height: 22px;
   padding: 0 8px;
-  border-radius: 6px;
+  border-radius: 999px;
   border: 1px solid var(--line);
   color: rgba(51, 51, 51, 0.58);
-  font-size: 12px;
-}
-
-.tool-mini-list .allowed {
-  color: var(--sage);
-  border-color: #d8e3d8;
-  background: var(--sage-light);
-}
-
-.tool-mini-list .disabled {
-  color: rgba(51, 51, 51, 0.48);
-  background: #f5f5f2;
+  font-size: 11px;
 }
 
 .expert-model-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding-top: 12px;
+  gap: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: 12px;
@@ -521,14 +510,14 @@ button {
 
 .expert-config-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(310px, 0.75fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.42fr) minmax(300px, 0.78fr);
+  gap: 12px;
 }
 
 .expert-logic,
 .expert-assets {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   align-content: start;
 }
 
@@ -540,20 +529,20 @@ button {
 }
 
 .config-title {
-  min-height: 58px;
+  min-height: 54px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 0 16px;
+  gap: 12px;
+  padding: 0 15px;
   border-bottom: 1px solid var(--line);
 }
 
 .config-title h2 {
   margin: 0;
-  font-family: "Noto Serif SC", Georgia, serif;
-  font-size: 17px;
-  font-weight: 500;
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .config-title span {
@@ -562,17 +551,21 @@ button {
 }
 
 .code-panel {
-  padding: 16px;
-  background: #fbfbf8;
+  margin: 14px;
+  padding: 14px;
+  border: 1px solid #dfe7df;
+  border-radius: 10px;
+  background: #f7faf5;
+  box-shadow: 0 10px 24px rgba(86, 112, 88, 0.04);
 }
 
 .code-panel pre {
   margin: 0;
   white-space: pre-wrap;
-  color: rgba(51, 51, 51, 0.78);
+  color: rgba(51, 51, 51, 0.72);
   font-family: Inter, system-ui, sans-serif;
   font-size: 12px;
-  line-height: 1.8;
+  line-height: 1.78;
 }
 
 .tool-list,
@@ -587,7 +580,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 13px;
+  padding: 12px 13px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #fdfdfb;
@@ -595,11 +588,11 @@ button {
 
 .tool-row strong {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
-.tool-row span {
+.tool-row > div > span {
   display: block;
   margin-top: 4px;
   color: var(--muted);
@@ -610,6 +603,7 @@ button {
 .permission-status {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   min-height: 26px;
   padding: 0 10px;
   border-radius: 999px;
@@ -619,13 +613,25 @@ button {
 }
 
 .permission-status.allowed {
-  color: var(--sage);
-  background: var(--sage-light);
+  color: #6f8a72;
+  background: #edf3ed;
 }
 
 .permission-status.disabled {
-  color: rgba(51, 51, 51, 0.48);
-  background: #f3f3f0;
+  color: rgba(51, 51, 51, 0.46);
+  background: #f4f4f1;
+}
+
+.permission-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1;
+  color: currentColor;
 }
 
 .memory-tabs {
