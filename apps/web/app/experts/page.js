@@ -13,11 +13,11 @@ function shortLayer(layer) {
   return layer;
 }
 
-function metaFor(expert) {
+function metaFor() {
   return [
     { icon: "web", text: "Web Search" },
-    { icon: "memory", text: expert.supportsMultiInstance ? "12 Memory" : "6 Memory" },
-    { icon: "schema", text: expert.outputSchema }
+    { icon: "memory", text: "12 Memory" },
+    { icon: "schema", text: "Pricing JSON" }
   ];
 }
 
