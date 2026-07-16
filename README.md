@@ -4,8 +4,6 @@
 
 Verity 将竞品分析从“一次性生成报告”重构为一条可编排、可验证、可追踪的研究 Workflow：多领域专家 Agent 在明确边界内协作，核心结论必须经过证据治理、交叉验证和 QA 质检，最终报告保留可复查的研究过程，并将有效反馈沉淀为受治理的 Research Memory。
 
-> **当前状态：本地 MVP / 持续开发中。** Web Console、SQLite 业务数据、证据评分、Analysis Pack、QA Gate、Trace Adapter、Expert Registry 和 Research Memory 最小治理已经实现；真实在线竞品研究、真实 LLM 专家执行、知识库检索和端到端案例验证仍未完成。
-
 ## 核心 Workflow
 
 ```text
@@ -87,7 +85,7 @@ apps/
   web/                  Next.js Web Console
   api/                  FastAPI Adapter、SQLite 与业务机制
 docs/
-  TODO.md               当前状态与开发顺序
+  TODO.md               开发任务与验收记录
   MECHANISM.md          核心产品机制
   ARCHITECTURE.md       工程架构与接入边界
   DECISION_LOG.md       关键产品决策
@@ -140,25 +138,14 @@ cd apps\web
 npm run build
 ```
 
-## 当前能力边界
+## 研究数据边界
 
-| 范围 | 当前状态 |
-| --- | --- |
-| Web Console 与专家治理页面 | 已实现页面与本地数据接入，部分页面仍使用明确标识的 Mock 数据 |
-| Evidence Scoring / Analysis Pack / QA Gate | 已实现规则化最小版本与测试 |
-| Expert Registry / 实例规划 / Context 注入 | 已实现本地契约、只读 API 与 deterministic wrapper |
-| Decision Trace | 已实现 Evolva TraceRecorder 到 Verity TraceStep 的脱敏映射与 smoke 验证 |
-| Research Memory | 已实现本地最小治理及对目标专家 checklist 的受控影响 |
-| Evolva Workflow | 已跑通版本化本地 fixture 的受控 Workflow；不代表真实在线研究 |
-| LLM 专家执行 | 已建立 provider readiness 与 execution boundary；真实 provider 调用待接入 |
-| 在线证据采集 | 尚未实现；规划范围仅包含公开网页与用户主动提供的 URL |
-| 端到端竞品案例 | 尚待验证，不能据此宣称已有真实业务效果 |
+Verity 的研究数据范围聚焦于公开网页与用户主动提供的 URL。系统区分公开来源、用户资料、结构化本地数据和 Agent 运行数据，并为证据保留来源、采集时间、内容摘要、内容哈希、质量评分与风险提示。
 
-Mock、`local-db`、Evolva runtime 和未来真实研究数据会保持明确区分。任何本地 fixture、静态示例或 deterministic wrapper 都不会被包装成真实在线竞品研究能力。
+无法访问、来源不明、样本不足或存在冲突的信息会被显式标记；搜索结果只用于发现候选来源，不能直接替代可复查证据。系统不以登录、绕过访问限制或规避反爬作为研究能力。
 
 ## 进一步阅读
 
-- [当前任务与开发状态](docs/TODO.md)
 - [核心产品机制](docs/MECHANISM.md)
 - [工程架构](docs/ARCHITECTURE.md)
 - [关键决策日志](docs/DECISION_LOG.md)
