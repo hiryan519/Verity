@@ -670,6 +670,16 @@ def list_claims(report_id: str) -> list[dict]:
     ]
 
 
+def get_analysis_pack(report_id: str) -> dict | None:
+    init_db()
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT payload_json FROM analysis_packs WHERE report_id = ? ORDER BY created_at DESC LIMIT 1",
+            (report_id,),
+        ).fetchone()
+    return _load_json(row, "payload_json") if row else None
+
+
 def list_trace_steps(report_id: str) -> list[dict]:
     init_db()
     with get_connection() as connection:
@@ -996,6 +1006,119 @@ def persist_bounded_workflow_result(
                 _json(qa_result["scores"]), _json(qa_result["hard_failures"]),
                 _json(qa_result["issues"]), _json(qa_result["recommendations"]),
                 qa_result["rework_count"], updated_at,
+            ),
+        )
+
+
+def persist_llm_workflow_result(
+    *,
+    report_id: str,
+    title: str,
+    research_goal: str,
+    competitors: list[str],
+    claims: list[dict[str, Any]],
+    analysis_pack: dict[str, Any],
+    qa_result: dict[str, Any],
+    updated_at: str,
+) -> None:
+    """Persist real LLM expert output without relabelling local evidence as online research."""
+    init_db()
+    with get_connection() as connection:
+        evidence_count = connection.execute(
+            "SELECT COUNT(*) FROM evidence_items WHERE report_id = ?", (report_id,)
+        ).fetchone()[0]
+        high_count = connection.execute(
+            "SELECT COUNT(*) FROM evidence_items WHERE report_id = ? AND confidence_level = 'high'",
+            (report_id,),
+        ).fetchone()[0]
+        existing = connection.execute("SELECT id FROM reports WHERE id = ?", (report_id,)).fetchone()
+        if existing:
+            connection.execute(
+                """
+                UPDATE reports SET title = ?, summary = ?, competitors_json = ?, claim_count = ?,
+                    evidence_count = ?, high_confidence_count = ?, qa_status = ?, updated_at = ?,
+                    data_source = ? WHERE id = ?
+                """,
+                (
+                    title,
+                    research_goal,
+                    _json(competitors),
+                    len(claims),
+                    evidence_count,
+                    high_count,
+                    qa_result["verdict"],
+                    updated_at,
+                    "llm-expert-over-local-evidence",
+                    report_id,
+                ),
+            )
+        else:
+            connection.execute(
+                """
+                INSERT INTO reports (
+                    id, title, summary, competitors_json, evidence_count, claim_count,
+                    high_confidence_count, qa_status, updated_at, data_source
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    report_id,
+                    title,
+                    research_goal,
+                    _json(competitors),
+                    evidence_count,
+                    len(claims),
+                    high_count,
+                    qa_result["verdict"],
+                    updated_at,
+                    "llm-expert-over-local-evidence",
+                ),
+            )
+
+        connection.execute("DELETE FROM claims WHERE report_id = ?", (report_id,))
+        connection.execute("DELETE FROM analysis_packs WHERE report_id = ?", (report_id,))
+        connection.execute("DELETE FROM qa_gate_results WHERE report_id = ?", (report_id,))
+        connection.executemany(
+            """
+            INSERT INTO claims (
+                id, report_id, text, status, strength, dimension, evidence_ids_json, risk_note
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    claim["id"],
+                    report_id,
+                    claim["text"],
+                    claim["status"],
+                    claim["strength"],
+                    claim["dimension"],
+                    _json(claim["evidence_ids"]),
+                    claim["risk_note"],
+                )
+                for claim in claims
+            ],
+        )
+        connection.execute(
+            "INSERT INTO analysis_packs (id, report_id, payload_json, created_at) VALUES (?, ?, ?, ?)",
+            (f"ap_{report_id}", report_id, _json(analysis_pack), updated_at),
+        )
+        connection.execute(
+            """
+            INSERT INTO qa_gate_results (
+                id, report_id, verdict, total_score, scores_json, hard_failures_json,
+                issues_json, recommendations_json, rework_count, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                f"qa_{report_id}",
+                report_id,
+                qa_result["verdict"],
+                qa_result["total_score"],
+                _json(qa_result["scores"]),
+                _json(qa_result["hard_failures"]),
+                _json(qa_result["issues"]),
+                _json(qa_result["recommendations"]),
+                qa_result["rework_count"],
+                updated_at,
             ),
         )
 

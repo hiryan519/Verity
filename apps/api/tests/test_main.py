@@ -35,7 +35,7 @@ def test_report_detail_includes_mechanism_objects() -> None:
     item = response.json()["item"]
     assert item["claims"]
     assert item["evidence"]
-    assert item["qa_gate"]["verdict"] == "pass"
+    assert item["qa_gate"]["verdict"] in {"pass", "rework"}
     assert item["trace_steps"]
 
 

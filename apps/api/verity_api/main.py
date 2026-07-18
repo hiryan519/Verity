@@ -10,6 +10,7 @@ from .db import (
     get_qa_result,
     create_memory_candidate,
     cite_knowledge_as_evidence,
+    get_analysis_pack,
     get_report,
     init_db,
     list_knowledge_items,
@@ -31,6 +32,7 @@ from .expert_execution_contracts import (
     list_execution_contracts,
 )
 from .llm_execution import execute_llm_expert, get_llm_provider_status, prepare_llm_expert_execution
+from .llm_workflow import run_llm_expert_workflow
 from .mock_data import MOCK_NAVIGATION
 from .qa import run_qa_gate
 from .system_module_registry import (
@@ -76,6 +78,11 @@ class LLMExpertExecutionRequest(BaseModel):
     input_payload: dict = Field(default_factory=dict)
 
 
+class LLMWorkflowRequest(BaseModel):
+    dimensions: list[str] = Field(default_factory=lambda: ["产品定位", "定价策略"])
+    scope_overrides: dict = Field(default_factory=dict)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -116,7 +123,7 @@ def report_detail(report_id: str) -> dict:
         return {"data_source": DATA_SOURCE, "item": None}
 
     return {
-        "data_source": DATA_SOURCE,
+        "data_source": _report_data_source(report),
         "item": {
             **report,
             "claims": list_claims(report_id),
@@ -133,17 +140,19 @@ def analysis_pack(report_id: str) -> dict:
     if report is None:
         return {"data_source": DATA_SOURCE, "item": None}
 
-    dimensions = ["产品定位", "核心场景", "定价策略", "用户声音", "证据缺口"]
-    pack = build_analysis_pack(
-        report_id=report_id,
-        research_goal=report["summary"],
-        dimensions=dimensions,
-        claims=list_claims(report_id),
-        evidence_items=list_evidence(report_id),
-    )
+    pack = get_analysis_pack(report_id)
+    if pack is None:
+        dimensions = ["产品定位", "核心场景", "定价策略", "用户声音", "证据缺口"]
+        pack = build_analysis_pack(
+            report_id=report_id,
+            research_goal=report["summary"],
+            dimensions=dimensions,
+            claims=list_claims(report_id),
+            evidence_items=list_evidence(report_id),
+        )
 
     return {
-        "data_source": DATA_SOURCE,
+        "data_source": _report_data_source(report),
         "item": {
             "analysis_pack": pack,
             "qa_preview": run_qa_gate(pack),
@@ -205,6 +214,24 @@ def llm_expert_execute(expert_id: str, payload: LLMExpertExecutionRequest) -> di
             "mode": "llm-execution",
             "is_real_workflow": False,
             "is_real_research": False,
+        },
+        "item": result,
+    }
+
+
+@app.post("/api/llm/reports/{report_id}/run")
+def llm_report_run(report_id: str, payload: LLMWorkflowRequest) -> dict:
+    result = run_llm_expert_workflow(
+        report_id,
+        dimensions=payload.dimensions,
+        scope_overrides=payload.scope_overrides,
+    )
+    return {
+        "data_source": {
+            "mode": "llm-expert-workflow",
+            "is_real_workflow": result.get("is_real_workflow", False),
+            "is_real_llm_execution": result.get("is_real_llm_execution", False),
+            "is_real_research": result.get("is_real_research", False),
         },
         "item": result,
     }
@@ -383,3 +410,22 @@ def _feedback_to_lesson(feedback: str, target_agent: str) -> str:
     if target_agent == "business_pricing_analyst" and any(marker in text.lower() for marker in ["token", "api", "调用", "价格"]):
         return "价格分析不能只比较订阅价格或 API 标价，还必须比较同预算下的 token 可用量、调用次数、上下文长度、速率限制、免费额度和套餐限制。"
     return f"后续执行时需要检查用户指出的分析缺口：{text}"
+
+
+def _report_data_source(report: dict) -> dict:
+    source = report.get("data_source", "")
+    if source == "llm-expert-over-local-evidence":
+        return {
+            "mode": source,
+            "is_real_workflow": True,
+            "is_real_llm_execution": True,
+            "is_real_research": False,
+        }
+    if source == "evolva-workflow-local-evidence":
+        return {
+            "mode": source,
+            "is_real_workflow": True,
+            "is_real_llm_execution": False,
+            "is_real_research": False,
+        }
+    return DATA_SOURCE

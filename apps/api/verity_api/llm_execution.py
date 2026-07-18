@@ -364,7 +364,7 @@ def _max_output_tokens(expert_id: str) -> int:
 
 def _prompt_with_output_schema(contract: dict[str, Any]) -> str:
     required_fields = [
-        field["name"]
+        f"{field['name']} ({field['type']})"
         for field in contract.get("output_schema", [])
         if field.get("required")
     ]
@@ -372,7 +372,8 @@ def _prompt_with_output_schema(contract: dict[str, Any]) -> str:
     return (
         f"{contract['prompt_fragment'].rstrip()}\n\n"
         "Return one JSON object using the exact top-level field names from the contract. "
-        f"Required fields: {field_text}. Use an empty array when a required list has no items. "
+        f"Required fields and types: {field_text}. Every field typed array must be a JSON array, "
+        "including when it contains one item; use an empty array when it has no items. "
         "Do not rename fields or add Markdown fences."
     )
 
