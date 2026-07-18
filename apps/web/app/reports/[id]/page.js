@@ -3,6 +3,7 @@ import {
   BadgeCheck, BookMarked, BookOpen, BookmarkPlus, Clock3, FileText, GitBranch,
   Globe2, Link2, MessageSquare, Network, ShieldCheck, SlidersHorizontal, Sparkles, TriangleAlert, Users
 } from "lucide-react";
+import { getApiData } from "@/lib/api";
 import { mockEvidence } from "@/lib/mock-data";
 
 const sections = [
@@ -18,15 +19,97 @@ function ChapterFooter({ sources, action, note }) {
     <div className="chapter-footer">
       <div className="chapter-source-row">
         <span className="chapter-source-head"><Link2 aria-hidden="true" />本章信源</span>
-        <div className="source-pills">{sources.map((source) => <button key={source} className="source-pill">[{source}]</button>)}</div>
+        <div className="source-pills">{sources.map((source) => <a key={source} href={`#evidence-${source}`} className="source-pill">[{source}]</a>)}</div>
       </div>
       {action ? <div className="chapter-action-row"><button className="chapter-action"><Sparkles aria-hidden="true" />{action}</button><span>{note}</span></div> : null}
     </div>
   );
 }
 
+function EvidenceInspector({ evidence = [], title = "证据 / 批注" }) {
+  return (
+    <aside className="reader-inspector">
+      <div className="inspector-tabs" role="tablist" aria-label="报告辅助工作区">
+        <button className="inspector-tab"><BookMarked aria-hidden="true" />知识库 / 标注 (0)</button>
+        <button className="inspector-tab active"><Link2 aria-hidden="true" />证据来源 ({evidence.length})</button>
+      </div>
+      <div className="inspector-head"><span className="inspector-title">{title}</span><button className="inspector-filter"><SlidersHorizontal aria-hidden="true" />上下文</button></div>
+      <div className="annotation-empty"><strong>我的批注 (0)</strong><span>真实批注入口将在知识库增强阶段接入；当前先保证证据和风险可追溯。</span></div>
+      <div className="margin-note-list">
+        {evidence.slice(0, 8).map((evidenceItem, index) => (
+          <article key={evidenceItem.id} id={`evidence-${evidenceItem.id}`} className="margin-note">
+            <span className={`source-badge ${evidenceItem.source_type === "official" ? "official" : ""}`}><Globe2 aria-hidden="true" />{evidenceItem.source_type === "official" ? "官方" : evidenceItem.platform || "Web"}</span>
+            <div className="margin-note-head"><h4>{evidenceItem.title}</h4><span className={evidenceItem.confidence_level === "high" ? "chip sage" : "chip warn"}>{evidenceItem.confidence_level || "未分级"} {evidenceItem.confidence ?? "-"}</span></div>
+            <span className="margin-note-meta">{evidenceItem.source_label || evidenceItem.url || "来源未记录"} · {evidenceItem.captured_at || "时间未记录"}</span>
+            <p>{evidenceItem.summary}</p>
+            {evidenceItem.risk_note ? <span className="evidence-risk">风险：{evidenceItem.risk_note}</span> : null}
+            {evidenceItem.url ? <a className="evidence-link-tag" href={evidenceItem.url} target="_blank" rel="noreferrer">打开来源</a> : null}
+          </article>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function RealReportPage({ item, dataSource }) {
+  const artifact = item.report_artifact;
+  const payload = artifact.payload || {};
+  const sections = Array.isArray(payload.sections) ? payload.sections : [];
+  const evidence = item.evidence || [];
+  const references = payload.claim_evidence_refs || [];
+  const sourcesFor = (sectionId) => references.filter((reference) => reference.section_id === sectionId).flatMap((reference) => reference.evidence_ids || []);
+
+  return (
+    <section className="report-reader">
+      <aside className="reader-toc">
+        <span className="reader-toc-title">目录</span>
+        <div className="progress-row" aria-label="阅读进度"><div className="reading-progress"><span /></div><span className="progress-value">12%</span></div>
+        <nav aria-label="报告目录">{sections.map((section, index) => <a key={section.id || index} className={index === 0 ? "active" : ""} href={`#${section.id || `section-${index}`}`}><span className="toc-index">{String(index + 1).padStart(2, "0")}</span><span>{section.title || `章节 ${index + 1}`}</span></a>)}</nav>
+      </aside>
+
+      <article className="reader-doc">
+        <div className="doc-shell">
+          <div className="doc-actions" aria-label="Report actions"><Link href="/knowledge"><BookOpen aria-hidden="true" />知识库</Link><Link href={`/reports/${item.id}/trace`}><GitBranch aria-hidden="true" />决策链路</Link></div>
+          <header className="doc-hero">
+            <span className="preview-pill real-pill">真实报告 · {dataSource?.mode || "llm-report-writer"}</span>
+            <h1>{item.title}</h1>
+            <div className="doc-meta" aria-label="报告元信息"><span className="doc-meta-card"><Users aria-hidden="true" /><strong>{item.claim_count || 0}</strong> 个结论</span><span className="doc-meta-card"><FileText aria-hidden="true" /><strong>{evidence.length}</strong> 条 Evidence</span><span className="doc-meta-card"><Clock3 aria-hidden="true" /><strong>{item.updated_at || "-"}</strong></span><span className="doc-meta-card"><ShieldCheck aria-hidden="true" /><strong>QA</strong> {artifact.qa_verdict}</span></div>
+            <div className="stats-dashboard" aria-label="核心数据仪表盘"><article className="stat-card"><div className="stat-top"><FileText aria-hidden="true" /><strong>{evidence.length}</strong></div><span>可复查 Evidence</span></article><article className="stat-card"><div className="stat-top"><Network aria-hidden="true" /><strong>{new Set(evidence.map((entry) => entry.source_type || entry.platform)).size}</strong></div><span>来源类型</span></article><article className="stat-card"><div className="stat-top"><ShieldCheck aria-hidden="true" /><strong>{Math.max(...evidence.map((entry) => entry.confidence || 0), 0)}</strong></div><span>最高证据质量分</span></article><article className="stat-card"><div className="stat-top"><TriangleAlert aria-hidden="true" /><strong>{(payload.risk_disclosures || []).length}</strong></div><span>风险披露</span></article></div>
+          </header>
+
+          {sections.map((section, index) => {
+            const sectionId = section.id || `section-${index}`;
+            const sourceIds = sourcesFor(sectionId);
+            const paragraphs = String(section.content || "").split(/\n\s*\n/).filter(Boolean);
+            return <section key={sectionId} id={sectionId} className="doc-section"><h2>{section.title || `章节 ${index + 1}`}</h2>{paragraphs.length ? paragraphs.map((paragraph, paragraphIndex) => <p key={paragraphIndex}>{paragraph}</p>) : <p>本章节暂无可交付内容。</p>}<ChapterFooter sources={sourceIds} /></section>;
+          })}
+          {payload.risk_disclosures?.length ? <section id="risk" className="doc-section"><h2>风险披露</h2>{payload.risk_disclosures.map((risk, index) => <p key={index}>{typeof risk === "string" ? risk : JSON.stringify(risk)}</p>)}</section> : null}
+        </div>
+      </article>
+
+      <EvidenceInspector evidence={evidence} />
+    </section>
+  );
+}
+
+function ReworkReportPage({ item, dataSource }) {
+  const evidence = item.evidence || [];
+  const qa = item.qa_gate || {};
+  return (
+    <section className="report-reader">
+      <aside className="reader-toc"><span className="reader-toc-title">研究状态</span><nav aria-label="研究状态"><a className="active" href="#qa-status"><span className="toc-index">01</span><span>QA 返工</span></a><a href="#evidence-status"><span className="toc-index">02</span><span>已采集证据</span></a></nav></aside>
+      <article className="reader-doc"><div className="doc-shell"><div className="doc-actions"><Link href={`/reports/${item.id}/trace`}><GitBranch aria-hidden="true" />决策链路</Link></div><header className="doc-hero"><span className="preview-pill">研究结果 · {dataSource?.mode || item.data_source}</span><h1>{item.title}</h1><div className="doc-meta"><span className="doc-meta-card"><FileText aria-hidden="true" /><strong>{evidence.length}</strong> 条 Evidence</span><span className="doc-meta-card"><TriangleAlert aria-hidden="true" /><strong>QA</strong> rework</span></div></header><section id="qa-status" className="doc-section"><h2>报告暂未签发</h2><p>本次研究已经完成证据采集、专家分析和 QA 检查，但 Analysis Pack 尚未达到报告交付条件。系统没有调用 Report Writer，也没有把返工状态包装成最终报告。</p><div className="qa-issues">{(qa.issues || ["当前 Analysis Pack 需要返工"]).slice(0, 6).map((issue, index) => <p key={index}>{typeof issue === "string" ? issue : issue.description || JSON.stringify(issue)}</p>)}</div><ChapterFooter sources={[]} /></section><section id="evidence-status" className="doc-section"><h2>当前已取得的证据</h2><p>以下 Evidence 已保留来源、抓取时间、评分和风险，可用于后续返工或人工确认。</p></section></div></article><EvidenceInspector evidence={evidence} title="Evidence / QA 风险" /></section>
+  );
+}
+
 export default async function ReportPage({ params }) {
   const { id } = await params;
+
+  const { item, dataSource } = await getApiData(`/api/reports/${id}`);
+  if (item && item.data_source !== "mock-seed") {
+    if (item.report_artifact) return <RealReportPage item={item} dataSource={dataSource} />;
+    return <ReworkReportPage item={item} dataSource={dataSource} />;
+  }
 
   return (
     <section className="report-reader">

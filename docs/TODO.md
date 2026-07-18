@@ -1,7 +1,7 @@
 # AI Product Research Agent Console TODO
 
 版本：v0.1  
-状态：P3.4 最小实现已完成，B3.1-B3.7 在线研究链路已完成；B3.8 已完成报告撰写门控、结构化报告资产落库、读取接口和测试，但当前在线案例的 QA 结果仍为 `rework`，因此没有伪造最终报告；P1 主链路页面已按 UI Preview 完成视觉迁移
+状态：P3.4 最小实现已完成，B3.1-B3.9 已完成；B3.7 已验证在线 Evidence → 专家 → QA 链路，B3.8 已完成报告撰写门控与资产接口，B3.9 已将真实研究流程接入 Web Console；当前在线案例 QA 仍为 `rework`，因此没有伪造最终报告；P1 主链路页面已按 UI Preview 完成视觉迁移
 关联文档：`docs/AI_Product_Research_Agent_PRD.md`、`docs/ARCHITECTURE.md`、`docs/DECISION_LOG.md`、`docs/MECHANISM.md`、`docs/DESIGN.md`
 
 ## 文档分工
@@ -66,15 +66,30 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - 执行请求必须绑定 Expert Registry、Execution Contract、Memory / Skill Context 和 Trace 边界。
 - 真实 provider 配置完成后，至少 3 类专家输出结构化结果，并进入 Trace / Analysis Pack / QA Gate。状态：已完成；在线案例实际 QA 结果为 `rework`，B3.8 已完成门控与报告资产接口，在线通过样本待后续验证。
 
+## 后续任务总览（2026-07-19）
+
+为避免开发过程中临时生成任务，后续按以下顺序推进；每项完成后只更新状态，不重新发明阶段：
+
+1. **B3.9 真实 Web Workflow 接入与报告阅读闭环（代码已完成）**：把研究目标、范围确认、真实在线 Run、Evidence / QA / Trace 和 Report Artifact 接入 Web Console。网页路由和构建已验证，真实在线 Run 的手动点击验收保留为后续验证动作。
+2. **B4 知识库作为证据源增强**：实现知识库按需检索，将命中内容转为 `user_knowledge` Evidence，并接入引用反馈与 Memory Candidate 试用记录。
+3. **Phase 4 / P4 报告增强**：在真实报告资产可展示后，再实现有数据依据的图表 / 数据表、批注与知识库入口、知识图谱和竞争情报中心。
+4. **Phase 5 / B5 端到端验证与复盘**：用真实竞品课题跑通从输入到报告的案例，记录 QA、Trace、证据覆盖、数据缺口和 bad case；所有结果指标以实际运行记录为准。
+5. **B1 Research Memory 治理增强**：补齐 Candidate trial 审计、Active Memory 降权 / 回滚、用户负反馈和版本化 Skill 沉淀。
+6. **B2 Evolva Workflow 深度接入（非当前 Web 闭环前置条件）**：在 Verity 业务链路稳定后，再评估将真实研究 Workflow 交给 Evolva WorkflowEngine 执行；不为此改写 Evolva 核心。
+
+当前不提前做 P4 的装饰性功能，也不把 Report Writer 的后端接口完成误读为用户已经能从网页生成报告。
+
 ## 当前任务：B4 知识库作为证据源增强
 
-B3.8 已完成报告撰写门控、报告资产接口和结构化引用校验。B4 先接入知识库检索，再在获得 QA `pass` / `pass_with_risk` 的真实在线 Run 后补做 Report Writer Provider Smoke Test；当前在线案例 QA 为 `rework`，仍保持返工状态。
+B3.9 已完成代码实现：工作台输入、Human Gate、真实 Run 创建、执行页、Evidence / QA / Trace 展示、Report Artifact 阅读和返工状态已接入。前端构建和页面路由 Smoke Test 已通过；下一步进入 B4，真实在线 Run 的网页点击验收在配置好的服务上执行。
 
 验收标准：
 
 - 知识库检索结果能按需转化为 `source_type = user_knowledge` 的 Evidence，并保留来源和用户反馈入口。
 - 知识库内容不常驻专家上下文，只在研究范围和检索条件匹配时进入 Evidence / Analysis Pack。
 - 用户删除引用或标注不合适后，相关 Memory Candidate 能进入降权或隔离路径。
+
+状态：待开始；B3.9 已完成代码实现。
 
 ## Phase 0：开发前确认
 
@@ -669,7 +684,7 @@ B3.8 已完成报告撰写门控、报告资产接口和结构化引用校验。
 - B3.5：至少 2 个同类型专家实例可并行执行并合并 fragment。
 - B3.7：至少 3 个专家输出真实结构化结果，且可追溯到 Trace 和 Analysis Pack。状态：已完成。
 
-状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.7 已完成。2026-07-18 的在线 Run 已验证 Tavily Evidence → 三类真实专家 → 交叉验证 → QA Gate 的关联链路；B3.8 已完成报告撰写门控与资产接口，下一阶段转入 B4。
+状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.9 已完成代码能力。2026-07-18 的在线 Run 已验证 Tavily Evidence → 三类真实专家 → 交叉验证 → QA Gate 的关联链路；B3.9 已把真实链路接入 Web Console，下一步进入 B4。
 
 ### B3.8 在线报告撰写与交付验证
 
@@ -688,6 +703,26 @@ B3.8 已完成报告撰写门控、报告资产接口和结构化引用校验。
 - 在线 Run 的报告撰写调用写入 Trace，并可通过报告详情接口读取。
 
 状态：门控、结构化输出校验、报告资产落库、报告详情读取接口和单元测试已完成；真实在线 Run 当前 QA 为 `rework`，已验证不会调用 Report Writer，待后续获得 QA `pass` / `pass_with_risk` 后执行真实 Provider Smoke Test。
+
+### B3.9 真实 Web Workflow 接入与报告阅读闭环
+
+任务：
+
+- 将工作台研究目标与 Human Gate 范围确认接入 `POST /api/research/runs`。
+- 将真实在线 Run 接入调研执行页，展示 Evidence、专家结果、QA 和 Trace，不使用 `mock-data` 冒充执行过程。
+- QA `pass` / `pass_with_risk` 时自动触发 Report Writer；`rework` 时展示返工原因、数据缺口和待确认状态。
+- 报告阅读页读取 `report_artifact`；报告章节、Claim / Evidence 引用、风险披露和数据源状态必须保持可追溯。
+- 决策链路页继续优先读取真实 Trace，只有没有 Trace 时才展示明确标识的 Mock fallback。
+
+验收标准：
+
+- 用户可以从网页创建真实在线 Run，并在执行页看到实际 `run_id`、数据源和执行结果。
+- 真实 Evidence、专家输出、QA Gate 和 Trace 能在页面之间保持同一 Run 关联。
+- QA `rework` 不触发 Report Writer，页面不会显示虚假的“报告已完成”。
+- QA `pass` / `pass_with_risk` 能读取并展示真实报告资产；报告章节保留 Claim / Evidence 关联。
+- 前端构建通过，API 回归测试通过，并完成至少一次真实在线 Run 的网页路径验收。
+
+状态：代码实现完成；前端构建、后端回归测试、API 状态检查和页面路由 Smoke Test 已通过。真实在线 Run 的网页点击验收待在本地双服务启动后执行；不影响进入 B4 的代码开发。
 
 ### B4 知识库作为证据源增强
 

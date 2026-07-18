@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.VERITY_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_VERITY_API_BASE_URL || process.env.VERITY_API_BASE_URL || "http://127.0.0.1:8000";
 
 export async function getApiData(path) {
   try {
@@ -24,6 +24,24 @@ export async function getApiData(path) {
       items: [],
       error: error instanceof Error ? error.message : "API unavailable"
     };
+  }
+}
+
+export async function postApiData(path, payload) {
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store"
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { ...data, error: data.detail || `API returned ${response.status}` };
+    }
+    return { ...data, error: null };
+  } catch (error) {
+    return { data_source: null, item: null, error: error instanceof Error ? error.message : "API unavailable" };
   }
 }
 

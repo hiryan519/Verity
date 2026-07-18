@@ -1043,11 +1043,21 @@ body {
 .choice-tag.selected { border-color: transparent; color: var(--sage); background: var(--sage-light); }
 .gate-input { width: 100%; height: 42px; margin-top: 18px; padding: 0 2px; border: 0; border-bottom: 1px solid var(--line); outline: 0; color: var(--ink); background: transparent; font-size: 14px; }
 .gate-input::placeholder { color: rgba(51, 51, 51, 0.38); }
+.gate-textarea { width: 100%; min-height: 86px; margin-top: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; outline: 0; resize: vertical; color: var(--ink); background: var(--surface); font-family: var(--serif); font-size: 15px; line-height: 1.75; }
+.gate-textarea:focus,
+.gate-control:focus { border-color: rgba(120, 144, 122, 0.72); box-shadow: 0 0 0 3px rgba(120, 144, 122, 0.12); }
+.gate-url-input { min-height: 72px; font-family: var(--sans); font-size: 13px; }
+.gate-control { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; outline: 0; color: var(--ink); background: var(--surface); font-size: 14px; }
+.gate-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.gate-card-heading > svg { width: 18px; height: 18px; flex: 0 0 auto; color: var(--sage); stroke-width: 1.5; }
+.form-error { margin: 0; padding: 10px 12px; border: 1px solid rgba(245, 166, 35, 0.34); border-radius: 8px; color: #9B6500 !important; background: var(--warning-light); font-family: var(--sans) !important; font-size: 12px !important; }
 .gate-select-row { margin-top: 20px; }
 .gate-select { flex: 1 1 220px; display: grid; gap: 8px; }
 .gate-select label { color: var(--muted); font-size: 12px; font-weight: 500; }
 .gate-select select { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; outline: 0; color: var(--ink); background: var(--surface); font-size: 14px; }
-.gate-submit { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #fff; background: var(--sage); font-size: 15px; font-weight: 600; }
+.gate-submit { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; color: #fff; background: var(--sage); font-size: 15px; font-weight: 600; }
+.gate-submit svg { width: 17px; height: 17px; }
+.gate-submit:disabled { cursor: wait; opacity: 0.62; }
 
 /* Workflow execution */
 .tri-layout { display: grid; grid-template-columns: minmax(220px, 0.72fr) minmax(520px, 1.7fr) minmax(280px, 0.88fr); gap: 14px; min-height: 680px; }
@@ -1085,6 +1095,33 @@ body {
 .stream-content { margin: 8px 0 0; color: var(--ink); font-family: var(--serif); font-size: 15px; line-height: 1.8; }
 .workflow-report-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 24px; color: var(--sage); font-size: 12px; font-weight: 600; }
 .workflow-report-link svg { width: 14px; height: 14px; }
+.workflow-report-disabled { display: inline-flex; align-items: center; gap: 7px; margin-top: 24px; color: var(--muted); font-size: 12px; }
+.workflow-report-disabled svg { width: 14px; height: 14px; }
+.workflow-run-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: -2px 0 20px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, 0.72); }
+.workflow-run-toolbar > div { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.workflow-run-id { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; }
+.workflow-run-status { color: var(--ink); font-size: 12px; font-weight: 600; }
+.workflow-run-toolbar .soft-button { display: inline-flex; align-items: center; gap: 6px; }
+.workflow-run-toolbar .soft-button svg { width: 14px; height: 14px; }
+.workflow-run-toolbar .soft-button:disabled svg { animation: spin 1s linear infinite; }
+.real-pill { color: var(--sage); background: var(--sage-light); }
+.workflow-empty { display: grid; justify-items: center; gap: 8px; min-height: 300px; padding: 60px 24px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); text-align: center; }
+.workflow-empty svg { width: 24px; height: 24px; color: var(--sage); stroke-width: 1.4; }
+.workflow-empty strong { color: var(--ink); font-size: 14px; font-weight: 600; }
+.workflow-empty p { max-width: 360px; margin: 0; font-family: var(--serif); font-size: 13px; line-height: 1.75; }
+.workflow-boundary-copy { max-width: 180px; margin: 8px 0 0; color: var(--muted); font-family: var(--serif); font-size: 12px; line-height: 1.7; }
+.trace-detail-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; color: var(--sage); font-size: 11px; font-weight: 600; }
+.trace-detail-link svg { width: 13px; height: 13px; }
+.evidence-empty { display: flex; align-items: center; gap: 8px; padding: 18px 14px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); font-size: 12px; }
+.evidence-empty svg { width: 15px; height: 15px; color: var(--warning); }
+.evidence-risk { display: block; margin-top: 8px; color: #9B6500; font-size: 11px; line-height: 1.5; }
+.qa-result { display: grid; gap: 4px; margin-top: 14px; padding: 12px; border: 1px solid rgba(120, 144, 122, 0.22); border-radius: 10px; color: var(--sage); background: rgba(234, 240, 234, 0.72); font-size: 11px; }
+.qa-result strong { font-size: 12px; }
+.qa-result.warn { border-color: rgba(245, 166, 35, 0.32); color: #9B6500; background: var(--warning-light); }
+.qa-issues { margin-top: 10px; padding: 12px; border-left: 2px solid var(--warning); color: #9B6500; background: rgba(255, 244, 221, 0.64); font-size: 11px; line-height: 1.6; }
+.qa-issues strong { display: block; margin-bottom: 5px; }
+.qa-issues p { margin: 3px 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .workflow-side { display: grid; gap: 16px; }
 .trace-overview { border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); overflow: hidden; }
 .trace-log-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
@@ -1295,6 +1332,7 @@ body {
   .section-head,
   .audit-header,
   .audit-card-main,
+  .workflow-run-toolbar,
   .asset-toolbar { align-items: flex-start; flex-direction: column; }
   .example-grid,
   .stats-dashboard,

@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 const stageNames = {
   plan: "需求理解", orchestration: "编排派遣", collect: "证据采集", evidence: "证据采集",
-  analysis: "交叉分析", cross_validation: "交叉分析", report: "报告撰写", qa: "质检审裁", delivery: "签发交付"
+  analysis: "交叉分析", cross_validation: "交叉分析", report: "报告撰写", report_writer: "报告撰写", qa: "质检审裁", delivery: "签发交付"
 };
 
 const fallbackSteps = [
@@ -31,8 +31,8 @@ export default async function TracePage({ params }) {
   const { id } = await params;
   const { item, dataSource, error } = await getApiData(`/api/reports/${id}`);
   const apiSteps = item?.trace_steps || [];
-  const traceSteps = apiSteps.length ? apiSteps : fallbackSteps;
-  const isFallback = !apiSteps.length;
+  const isFallback = !apiSteps.length && !item;
+  const traceSteps = apiSteps.length ? apiSteps : isFallback ? fallbackSteps : [];
   const totalToken = traceSteps.reduce((sum, step) => sum + (step.token_count || 0), 0);
   const totalDuration = traceSteps.reduce((sum, step) => sum + (step.duration_ms || 0), 0);
   const expandedIndex = Math.max(0, traceSteps.findIndex((step) => displayStage(step.stage) === "报告撰写"));
@@ -55,15 +55,16 @@ export default async function TracePage({ params }) {
       </header>
 
       {error && !isFallback ? <p className="trace-error">API 未连接：{error}</p> : null}
+      {!traceSteps.length && !error ? <div className="workflow-empty"><Blocks aria-hidden="true" /><strong>当前 Run 尚未产生 Trace</strong><p>研究可能尚未开始，或执行过程中没有写入可展示的 Trace。</p></div> : null}
 
-      <div className="audit-filters" aria-label="Trace 阶段筛选">
+      {traceSteps.length ? <div className="audit-filters" aria-label="Trace 阶段筛选">
         <span className="audit-filter-icon"><Funnel aria-hidden="true" /></span>
         {['全部', '需求理解', '编排派遣', '证据采集', '交叉分析', '报告撰写', '质检审裁', '签发交付'].map((filter, index) => (
           <button key={filter} className={`audit-filter ${index === 0 ? "active" : ""}`}>{filter}</button>
         ))}
-      </div>
+      </div> : null}
 
-      <div className="audit-timeline">
+      {traceSteps.length ? <div className="audit-timeline">
         {traceSteps.map((step, index) => {
           const stage = displayStage(step.stage);
           const expanded = index === expandedIndex;
@@ -102,7 +103,7 @@ export default async function TracePage({ params }) {
             </article>
           );
         })}
-      </div>
+      </div> : null}
     </section>
   );
 }

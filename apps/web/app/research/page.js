@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 function statusMeta(status) {
   if (status === "pass") return { label: "已完成", className: "chip sage" };
   if (status === "risk" || status === "pass_with_risk") return { label: "带风险", className: "chip warn" };
+  if (status === "rework") return { label: "需返工", className: "chip warn" };
   return { label: "草稿", className: "chip sage" };
 }
 
