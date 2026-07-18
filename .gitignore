@@ -43,3 +43,8 @@ evolva/artifacts/
 evolva/runtime/
 evolva/mcp/servers.json
 .local/
+
+# Local provider credentials
+.env
+.env.*
+!.env.example

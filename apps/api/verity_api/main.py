@@ -30,7 +30,7 @@ from .expert_execution_contracts import (
     get_execution_contract,
     list_execution_contracts,
 )
-from .llm_execution import get_llm_provider_status, prepare_llm_expert_execution
+from .llm_execution import execute_llm_expert, get_llm_provider_status, prepare_llm_expert_execution
 from .mock_data import MOCK_NAVIGATION
 from .qa import run_qa_gate
 from .system_module_registry import (
@@ -194,6 +194,19 @@ def llm_expert_prepare(expert_id: str, payload: LLMExpertExecutionRequest) -> di
     return {
         "data_source": {"mode": "llm-execution-boundary", "is_real_workflow": False},
         "item": prepare_llm_expert_execution(expert_id, payload.input_payload),
+    }
+
+
+@app.post("/api/llm/experts/{expert_id}/execute")
+def llm_expert_execute(expert_id: str, payload: LLMExpertExecutionRequest) -> dict:
+    result = execute_llm_expert(expert_id, payload.input_payload)
+    return {
+        "data_source": {
+            "mode": "llm-execution",
+            "is_real_workflow": False,
+            "is_real_research": False,
+        },
+        "item": result,
     }
 
 

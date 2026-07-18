@@ -879,6 +879,38 @@ def replace_trace_steps(report_id: str, steps: list[dict[str, Any]], *, source_p
     return len(steps)
 
 
+def append_trace_step(report_id: str, step: dict[str, Any]) -> None:
+    """Append one trace step without replacing an existing workflow trace."""
+    init_db()
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO trace_steps (
+                id, report_id, stage, agent, task, status, model, prompt, input_json,
+                output_json, token_count, duration_ms, evidence_ids_json,
+                report_sections_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                step["id"],
+                report_id,
+                step["stage"],
+                step["agent"],
+                step["task"],
+                step["status"],
+                step["model"],
+                step["prompt"],
+                _json(step["input"]),
+                _json(step["output"]),
+                step["token_count"],
+                step["duration_ms"],
+                _json(step["evidence_ids"]),
+                _json(step["report_sections"]),
+                step["created_at"],
+            ),
+        )
+
+
 def persist_bounded_workflow_result(
     *,
     report_id: str,
