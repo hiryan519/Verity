@@ -255,6 +255,96 @@ def collect_public_web_evidence(
             provider.close()
 
 
+def collect_public_web_evidence_batch(
+    *,
+    queries: list[str],
+    user_urls: list[str] | None = None,
+    max_results: int = 5,
+    include_domains: list[str] | None = None,
+    exclude_domains: list[str] | None = None,
+    provider: TavilyProvider | None = None,
+) -> dict[str, Any]:
+    """Collect several query slices into one deduplicated Run Evidence Store.
+
+    Each query keeps its own search/extract trace. Search snippets remain trace
+    only; only successful page extraction is promoted to evidence. User URLs are
+    passed through on the first query and deduplicated with search results.
+    """
+
+    normalized_queries = [str(query).strip() for query in queries if str(query).strip()]
+    if not normalized_queries:
+        normalized_queries = ["用户提供的公开网页"] if user_urls else []
+    if not normalized_queries:
+        return {
+            "status": "blocked",
+            "reason": "query_required",
+            "queries": [],
+            "evidence_items": [],
+            "query_results": [],
+            "source_attempts": [],
+            "collection_trace": [],
+            "is_real_online_collection": False,
+        }
+    if not _tavily_api_key() and provider is None:
+        return {
+            "status": "blocked",
+            "reason": "api_key_not_configured",
+            "queries": normalized_queries,
+            "evidence_items": [],
+            "query_results": [],
+            "source_attempts": [],
+            "collection_trace": [],
+            "is_real_online_collection": False,
+        }
+
+    owned_provider = provider is None
+    provider = provider or TavilyProvider(api_key=_tavily_api_key())
+    evidence_by_hash: dict[str, dict[str, Any]] = {}
+    query_results: list[dict[str, Any]] = []
+    attempts: list[dict[str, Any]] = []
+    trace: list[dict[str, Any]] = []
+    try:
+        for index, query in enumerate(normalized_queries):
+            result = collect_public_web_evidence(
+                query=query,
+                user_urls=user_urls if index == 0 else [],
+                max_results=max_results,
+                include_domains=include_domains,
+                exclude_domains=exclude_domains,
+                provider=provider,
+            )
+            query_results.append({
+                "query": query,
+                "status": result.get("status"),
+                "reason": result.get("reason"),
+                "evidence_count": len(result.get("evidence_items", [])),
+                "search_request_id": result.get("search_request_id"),
+                "search_usage": result.get("search_usage", {}),
+            })
+            for attempt in result.get("source_attempts", []):
+                attempts.append({"query": query, **attempt})
+            for entry in result.get("collection_trace", []):
+                trace.append({"query": query, **entry})
+            for item in result.get("evidence_items", []):
+                dedupe_key = item.get("content_hash") or item.get("id")
+                if dedupe_key and dedupe_key not in evidence_by_hash:
+                    evidence_by_hash[dedupe_key] = item
+        evidence_items = list(evidence_by_hash.values())
+        return {
+            "status": "completed" if evidence_items else "insufficient_evidence",
+            "reason": "evidence_extracted" if evidence_items else "no_extractable_sources",
+            "queries": normalized_queries,
+            "evidence_items": evidence_items,
+            "query_results": query_results,
+            "source_attempts": attempts,
+            "collection_trace": trace,
+            "is_real_online_collection": bool(evidence_items),
+        }
+    finally:
+        if owned_provider:
+            provider.close()
+
+
 def _to_evidence_item(
     *,
     url: str,

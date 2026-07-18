@@ -1,5 +1,6 @@
 import json
 import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -30,6 +31,7 @@ def init_db() -> None:
                 title TEXT NOT NULL,
                 summary TEXT NOT NULL,
                 competitors_json TEXT NOT NULL,
+                scope_json TEXT NOT NULL DEFAULT '{}',
                 evidence_count INTEGER NOT NULL DEFAULT 0,
                 claim_count INTEGER NOT NULL DEFAULT 0,
                 high_confidence_count INTEGER NOT NULL DEFAULT 0,
@@ -153,6 +155,7 @@ def init_db() -> None:
         )
         _ensure_memory_columns(connection)
         _ensure_evidence_columns(connection)
+        _ensure_report_columns(connection)
         seed_if_empty(connection)
         seed_knowledge_if_empty(connection)
 
@@ -184,6 +187,12 @@ def _ensure_evidence_columns(connection: sqlite3.Connection) -> None:
     columns = {row["name"] for row in connection.execute("PRAGMA table_info(evidence_items)").fetchall()}
     if "content_hash" not in columns:
         connection.execute("ALTER TABLE evidence_items ADD COLUMN content_hash TEXT NOT NULL DEFAULT ''")
+
+
+def _ensure_report_columns(connection: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in connection.execute("PRAGMA table_info(reports)").fetchall()}
+    if "scope_json" not in columns:
+        connection.execute("ALTER TABLE reports ADD COLUMN scope_json TEXT NOT NULL DEFAULT '{}'")
 
 
 def _load_json(row: sqlite3.Row, key: str):
@@ -573,6 +582,42 @@ def get_report(report_id: str) -> dict | None:
     return _report_from_row(row) if row else None
 
 
+def create_online_research_run(
+    *,
+    research_goal: str,
+    competitors: list[str],
+    dimensions: list[str],
+    market: str = "not_specified",
+    audience: str = "not_specified",
+    time_range: str = "近几年",
+    run_id: str | None = None,
+) -> dict:
+    """Create an explicit online research Run before any provider is called."""
+    init_db()
+    run_id = run_id or f"online_run_{uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc).isoformat()
+    scope = {
+        "research_goal": research_goal,
+        "competitors": competitors,
+        "dimensions": dimensions,
+        "market": market,
+        "audience": audience,
+        "time_range": time_range,
+    }
+    title = research_goal.strip()[:120] or "在线竞品研究"
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO reports (
+                id, title, summary, competitors_json, scope_json, evidence_count,
+                claim_count, high_confidence_count, qa_status, updated_at, data_source
+            ) VALUES (?, ?, ?, ?, ?, 0, 0, 0, 'pending', ?, 'tavily-online-run')
+            """,
+            (run_id, title, research_goal, _json(competitors), _json(scope), now),
+        )
+    return get_report(run_id)
+
+
 def list_experts() -> list[dict]:
     init_db()
     with get_connection() as connection:
@@ -626,7 +671,7 @@ def persist_collected_evidence(report_id: str, evidence_items: list[dict[str, An
                     item.get("url"),
                     item["source_type"],
                     item["platform"],
-                    item["source_label"],
+                    item.get("source_label") or item.get("source") or "External evidence",
                     item["captured_at"],
                     item["retrieval_status"],
                     _json(item.get("claim_types", [])),
@@ -983,6 +1028,60 @@ def append_trace_step(report_id: str, step: dict[str, Any]) -> None:
         )
 
 
+def persist_evidence_collection_trace(report_id: str, collection: dict[str, Any]) -> int:
+    """Map public-web search/extract facts into the Run's readable Trace."""
+    trace_entries = collection.get("collection_trace", [])
+    query_results = collection.get("query_results", [])
+    now = datetime.now(timezone.utc).isoformat()
+    steps: list[dict[str, Any]] = []
+    for index, result in enumerate(query_results):
+        query = str(result.get("query", ""))
+        steps.append(
+            {
+                "id": f"trace_{report_id}_evidence_query_{index}_{uuid4().hex[:6]}",
+                "stage": "evidence_collection",
+                "agent": "evidence_collector",
+                "task": f"public web query: {query}",
+                "status": result.get("status", "completed"),
+                "model": "tavily-search-extract",
+                "prompt": query,
+                "input": {"query": query, "max_results": collection.get("max_results", 0)},
+                "output": result,
+                "token_count": 0,
+                "duration_ms": 0,
+                "evidence_ids": [],
+                "report_sections": [],
+                "created_at": now,
+            }
+        )
+    for index, entry in enumerate(trace_entries):
+        query = str(entry.get("query", ""))
+        url = str(entry.get("url", ""))
+        content_hash = str(entry.get("content_hash", ""))
+        evidence_ids = [f"ev_tavily_{content_hash[:16]}"] if entry.get("used_as_evidence") and content_hash else []
+        steps.append(
+            {
+                "id": f"trace_{report_id}_evidence_{index}_{uuid4().hex[:6]}",
+                "stage": "evidence_collection",
+                "agent": "evidence_collector",
+                "task": f"{entry.get('stage', 'source')} {url}".strip(),
+                "status": entry.get("status", "observed"),
+                "model": "tavily-search-extract",
+                "prompt": query,
+                "input": {"query": query, "url": url},
+                "output": entry,
+                "token_count": 0,
+                "duration_ms": 0,
+                "evidence_ids": evidence_ids,
+                "report_sections": [],
+                "created_at": now,
+            }
+        )
+    for step in steps:
+        append_trace_step(report_id, step)
+    return len(steps)
+
+
 def persist_bounded_workflow_result(
     *,
     report_id: str,
@@ -1082,6 +1181,7 @@ def persist_llm_workflow_result(
     analysis_pack: dict[str, Any],
     qa_result: dict[str, Any],
     updated_at: str,
+    data_source: str = "llm-expert-over-local-evidence",
 ) -> None:
     """Persist real LLM expert output without relabelling local evidence as online research."""
     init_db()
@@ -1110,7 +1210,7 @@ def persist_llm_workflow_result(
                     high_count,
                     qa_result["verdict"],
                     updated_at,
-                    "llm-expert-over-local-evidence",
+                    data_source,
                     report_id,
                 ),
             )
@@ -1132,7 +1232,7 @@ def persist_llm_workflow_result(
                     high_count,
                     qa_result["verdict"],
                     updated_at,
-                    "llm-expert-over-local-evidence",
+                    data_source,
                 ),
             )
 
@@ -1214,6 +1314,7 @@ def _report_from_row(row: sqlite3.Row) -> dict:
         "title": row["title"],
         "summary": row["summary"],
         "competitors": _load_json(row, "competitors_json"),
+        "scope": _load_json(row, "scope_json"),
         "evidence_count": row["evidence_count"],
         "claim_count": row["claim_count"],
         "high_confidence_count": row["high_confidence_count"],

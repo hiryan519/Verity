@@ -1,7 +1,7 @@
 # AI Product Research Agent Console TODO
 
 版本：v0.1  
-状态：P3.4 最小实现已完成，B3.1-B3.6 已完成；B3.7 部分完成：真实 LLM 调用、模型路由、结构化输出校验、Trace、三专家本地 Evidence 链路、Tavily 公开网页采集适配均已实现；Tavily Evidence 接入正式多专家 Workflow、在线案例落库与最终报告验证仍待完成；P1 主链路页面已按 UI Preview 完成视觉迁移
+状态：P3.4 最小实现已完成，B3.1-B3.7 在线研究链路已完成；已实现真实 LLM 调用、模型路由、结构化输出校验、Trace、Tavily 公开网页 Evidence、独立在线 Run、三专家 Workflow、交叉验证受控重试和 QA Gate；在线案例已完成至 QA，但 QA 仍可能返回 rework，最终报告撰写与交付验证进入下一阶段；P1 主链路页面已按 UI Preview 完成视觉迁移
 关联文档：`docs/AI_Product_Research_Agent_PRD.md`、`docs/ARCHITECTURE.md`、`docs/DECISION_LOG.md`、`docs/MECHANISM.md`、`docs/DESIGN.md`
 
 ## 文档分工
@@ -22,7 +22,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - Verity 自己补充竞品研究业务层、证据治理、Analysis Pack、QA Gate、Trace 展示、Research Memory 治理和 Web Console。
 - 当前前端采用 `apps/web` Next.js；后端采用 `apps/api` FastAPI；本地结构化数据采用 SQLite。
 - 当前已完成 P1 Mock UI、P2 结构化数据与业务机制、P3 Evolva 接入的最小 wrapper。
-- 当前真实程度边界：页面形态、SQLite local-db、Evidence Scoring、Analysis Pack、QA Gate、TraceRecorder 映射、Expert wrapper、Memory 最小治理已实现；真实 LLM expert execution 已可在本地 Evidence 上运行并写入 Analysis Pack / QA Gate；Tavily 公开网页采集适配已实现，但尚未接入正式多专家在线研究 workflow；真实知识库检索和端到端在线案例验证仍未完成。
+- 当前真实程度边界：页面形态、SQLite local-db、Evidence Scoring、Analysis Pack、QA Gate、TraceRecorder 映射、Expert wrapper、Memory 最小治理已实现；真实 LLM expert execution 已可在本地或 Tavily Extract Evidence 上运行并写入 Trace / Analysis Pack / QA Gate；在线 Run 已保存研究范围、批量查询、Evidence provenance、content_hash 和专家链路。最终 Report Writer 在线交付、真实知识库检索和端到端报告质量验证仍待完成。
 - 2026-07-13 已在 `docs/MECHANISM.md` 确认专家体系、Evidence Router / Evidence Slice、QA Brief Builder、Report Renderer、按需多实例和各专家执行契约；这些契约已落成 Expert Registry 与 Execution Contract，后续开发应继续沿用注册表和契约，不直接编写散落的 prompt。
 
 ## 0. 执行原则
@@ -36,9 +36,9 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - TODO 中的“状态”必须同时说明已完成能力和未完成边界，避免把 mock / wrapper 误读为真实能力。
 - 机制细节以 `docs/MECHANISM.md` 为准；TODO 只保留开发必须知道的摘要和链接。
 
-## 当前下一步：B3.7 在线 Evidence 接入与端到端验证
+## B3.7 已完成：在线 Evidence 接入与端到端验证
 
-当前只做下面这一件事：把 Tavily 成功提取的 Evidence 接入现有三专家 Workflow，并完成一次可追溯的在线案例运行。
+本任务已将 Tavily 成功提取的 Evidence 接入现有三专家 Workflow，并完成一次可追溯的在线案例运行。2026-07-18 的曹操出行验证 Run 真实提取 3 条 Evidence，调用产品分析、定价策略、用户体验三类专家，完成交叉验证和 QA；QA 结果为 `rework`，因此未把它包装成已通过的最终报告。
 
 执行顺序：
 
@@ -46,15 +46,15 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 2. 按分析维度生成多组公开网页查询，将 Tavily Extract 成功结果写入该 Run 的 Evidence Store；Search 摘要不得直接进入 Evidence。
 3. 用至少 3 类真实专家读取这些 Evidence，结果写入 Trace、Analysis Pack 和 QA Gate；数据不足时保留 `data_gap`。
 4. 修复交叉验证输出失败或触发一次受控重试；QA 只能输出通过、带风险通过或返工。
-5. 完成一次在线案例后，再把该 Run 标记为 `is_real_research=true`；在此之前不得把 Tavily 采集适配包装成完整在线研究能力。
+5. 完成一次在线案例后，再把该 Run 标记为 `is_real_research=true`；在此之前不得把 Tavily 采集适配包装成完整在线研究能力。已完成。
 
-本任务完成标准：同一个 Run 中能看到 Evidence → 三类专家输出 → 交叉验证 → QA Gate 的完整关联，且每条 Evidence 保留 URL、抓取时间、评分、风险和 `content_hash`。
+本任务完成标准：同一个 Run 中能看到 Evidence → 三类专家输出 → 交叉验证 → QA Gate 的完整关联，且每条 Evidence 保留 URL、抓取时间、评分、风险和 `content_hash`。已完成；QA 不通过时保留 `rework` 状态，不生成虚假的通过结论。
 
 建议影响文件：
 
 - `apps/api/verity_api/`：连接 Tavily Evidence Collection、在线 Run、三专家 Workflow 和结果落库。
 - `apps/api/tests/`：补充在线 Evidence 到 Analysis Pack / QA Gate 的集成测试和交叉验证失败重试测试。
-- `docs/TODO.md`：完成本任务后更新 B3.7 状态。
+- `docs/TODO.md`：本任务状态已更新；下一阶段转入 B3.8。
 
 验收标准：
 
@@ -64,7 +64,17 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - 专家模型按 Expert Registry 的模型档位路由，支持专家级和档位级环境变量覆盖。状态：已完成。
 - 结构化输出按专家 Execution Contract 校验，失败结果不进入成功路径。状态：已完成。
 - 执行请求必须绑定 Expert Registry、Execution Contract、Memory / Skill Context 和 Trace 边界。
-- 真实 provider 配置完成后，至少 3 类专家输出结构化结果，并进入 Trace / Analysis Pack / QA Gate。状态：本地 Evidence 链路已完成；在线 Tavily Evidence 链路待完成。
+- 真实 provider 配置完成后，至少 3 类专家输出结构化结果，并进入 Trace / Analysis Pack / QA Gate。状态：已完成；在线案例实际 QA 结果为 `rework`，仍需下一阶段补齐 Report Writer 交付验证。
+
+## 当前下一步：B3.8 在线报告撰写与交付验证
+
+在 B3.7 已完成的在线 Run 上，接入报告撰写专家（必要时按章节并行），仅允许使用通过 Evidence / Analysis Pack / QA Gate 的内容生成可追溯报告；当 QA 为 `rework` 时先保留风险状态或请求人工确认，不得直接标记为最终通过。
+
+验收标准：
+
+- 同一在线 Run 能从研究范围、Evidence、三类专家、交叉验证和 QA 进入 Report Writer。
+- 报告章节保留 Claim、Evidence ID、来源 URL、风险和 QA 状态关联。
+- QA `pass` 或 `pass_with_risk` 才能进入报告交付；`rework` 只能输出返工建议或待确认状态。
 
 ## Phase 0：开发前确认
 

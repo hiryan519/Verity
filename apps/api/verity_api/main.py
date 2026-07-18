@@ -12,6 +12,7 @@ from .db import (
     cite_knowledge_as_evidence,
     get_analysis_pack,
     get_report,
+    create_online_research_run,
     init_db,
     list_knowledge_items,
     list_memories,
@@ -20,6 +21,7 @@ from .db import (
     list_reports,
     list_trace_steps,
     persist_collected_evidence,
+    persist_evidence_collection_trace,
     replace_trace_steps,
     record_memory_signal,
     update_memory_status,
@@ -33,7 +35,7 @@ from .expert_execution_contracts import (
     list_execution_contracts,
 )
 from .llm_execution import execute_llm_expert, get_llm_provider_status, prepare_llm_expert_execution
-from .llm_workflow import run_llm_expert_workflow
+from .llm_workflow import ONLINE_PARALLEL_EXPERTS, run_llm_expert_workflow
 from .mock_data import MOCK_NAVIGATION
 from .qa import run_qa_gate
 from .system_module_registry import (
@@ -41,7 +43,11 @@ from .system_module_registry import (
     get_system_module_contract,
     list_system_module_contracts,
 )
-from .tavily_adapter import collect_public_web_evidence, get_tavily_status
+from .tavily_adapter import (
+    collect_public_web_evidence,
+    collect_public_web_evidence_batch,
+    get_tavily_status,
+)
 from .verity_experts import VerityExpertRunner
 
 
@@ -94,6 +100,25 @@ class EvidenceCollectionRequest(BaseModel):
     exclude_domains: list[str] = Field(default_factory=list)
 
 
+class ResearchRunRequest(BaseModel):
+    research_goal: str
+    competitors: list[str] = Field(default_factory=list)
+    dimensions: list[str] = Field(default_factory=list)
+    market: str = "not_specified"
+    audience: str = "not_specified"
+    time_range: str = "近几年"
+
+
+class OnlineResearchRunRequest(BaseModel):
+    queries: list[str] = Field(default_factory=list)
+    user_urls: list[str] = Field(default_factory=list)
+    dimensions: list[str] = Field(default_factory=list)
+    scope_overrides: dict = Field(default_factory=dict)
+    max_results: int = 5
+    include_domains: list[str] = Field(default_factory=list)
+    exclude_domains: list[str] = Field(default_factory=list)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -125,6 +150,26 @@ def navigation() -> dict:
 @app.get("/api/reports")
 def reports() -> dict:
     return {"data_source": DATA_SOURCE, "items": list_reports()}
+
+
+@app.post("/api/research/runs")
+def research_run_create(payload: ResearchRunRequest) -> dict:
+    run = create_online_research_run(
+        research_goal=payload.research_goal,
+        competitors=payload.competitors,
+        dimensions=payload.dimensions,
+        market=payload.market,
+        audience=payload.audience,
+        time_range=payload.time_range,
+    )
+    return {
+        "data_source": {
+            "mode": "online-research-run",
+            "is_real_online_collection": False,
+            "is_real_research": False,
+        },
+        "item": run,
+    }
 
 
 @app.get("/api/reports/{report_id}")
@@ -248,6 +293,73 @@ def llm_report_run(report_id: str, payload: LLMWorkflowRequest) -> dict:
     return {
         "data_source": {
             "mode": "llm-expert-workflow",
+            "is_real_workflow": result.get("is_real_workflow", False),
+            "is_real_llm_execution": result.get("is_real_llm_execution", False),
+            "is_real_research": result.get("is_real_research", False),
+        },
+        "item": result,
+    }
+
+
+@app.post("/api/research/runs/{run_id}/run")
+def online_research_run(run_id: str, payload: OnlineResearchRunRequest) -> dict:
+    report = get_report(run_id)
+    if report is None:
+        return {
+            "data_source": {"mode": "online-research-run", "is_real_research": False},
+            "item": {"status": "blocked", "reason": "run_not_found", "run_id": run_id},
+        }
+
+    scope = report.get("scope") or {}
+    dimensions = payload.dimensions or scope.get("dimensions") or ["产品定位", "定价策略", "用户体验"]
+    queries = payload.queries or _default_online_queries(scope, dimensions)
+    collection = collect_public_web_evidence_batch(
+        queries=queries,
+        user_urls=payload.user_urls,
+        max_results=payload.max_results,
+        include_domains=payload.include_domains,
+        exclude_domains=payload.exclude_domains,
+    )
+    persisted_count = 0
+    trace_count = 0
+    if collection.get("evidence_items"):
+        persisted_count = persist_collected_evidence(run_id, collection["evidence_items"])
+        collection["max_results"] = payload.max_results
+        trace_count = persist_evidence_collection_trace(run_id, collection)
+
+    if not collection.get("evidence_items"):
+        return {
+            "data_source": {
+                "mode": "tavily-online-run",
+                "is_real_online_collection": False,
+                "is_real_research": False,
+            },
+            "item": {
+                "status": collection.get("status", "insufficient_evidence"),
+                "reason": collection.get("reason"),
+                "run_id": run_id,
+                "collection": collection,
+                "persisted_count": persisted_count,
+                "trace_count": trace_count,
+            },
+        }
+
+    result = run_llm_expert_workflow(
+        run_id,
+        dimensions=dimensions,
+        scope_overrides=payload.scope_overrides,
+        expert_ids=ONLINE_PARALLEL_EXPERTS,
+        evidence_source="tavily-public-web",
+        is_real_research=True,
+        run_id=run_id,
+    )
+    result["collection"] = collection
+    result["persisted_count"] = persisted_count
+    result["collection_trace_count"] = trace_count
+    return {
+        "data_source": {
+            "mode": "tavily-online-research-workflow",
+            "is_real_online_collection": bool(collection.get("evidence_items")),
             "is_real_workflow": result.get("is_real_workflow", False),
             "is_real_llm_execution": result.get("is_real_llm_execution", False),
             "is_real_research": result.get("is_real_research", False),
@@ -454,6 +566,12 @@ def _feedback_to_lesson(feedback: str, target_agent: str) -> str:
     return f"后续执行时需要检查用户指出的分析缺口：{text}"
 
 
+def _default_online_queries(scope: dict, dimensions: list[str]) -> list[str]:
+    competitors = "、".join(scope.get("competitors") or ["竞品"])
+    time_range = scope.get("time_range") or "近几年"
+    return [f"{competitors} {time_range} {dimension} 公开网页" for dimension in dimensions]
+
+
 def _report_data_source(report: dict) -> dict:
     source = report.get("data_source", "")
     if source == "llm-expert-over-local-evidence":
@@ -462,6 +580,13 @@ def _report_data_source(report: dict) -> dict:
             "is_real_workflow": True,
             "is_real_llm_execution": True,
             "is_real_research": False,
+        }
+    if source == "llm-expert-over-tavily-evidence":
+        return {
+            "mode": source,
+            "is_real_workflow": True,
+            "is_real_llm_execution": True,
+            "is_real_research": True,
         }
     if source == "evolva-workflow-local-evidence":
         return {
@@ -475,6 +600,14 @@ def _report_data_source(report: dict) -> dict:
             "mode": source,
             "is_real_workflow": False,
             "is_real_llm_execution": False,
-            "is_real_research": True,
+            "is_real_online_collection": True,
+            "is_real_research": False,
+        }
+    if source == "tavily-online-run":
+        return {
+            "mode": source,
+            "is_real_workflow": False,
+            "is_real_llm_execution": False,
+            "is_real_research": False,
         }
     return DATA_SOURCE

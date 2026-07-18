@@ -5,6 +5,7 @@ from verity_api.tavily_adapter import (
     TavilyProvider,
     TavilyProviderError,
     collect_public_web_evidence,
+    collect_public_web_evidence_batch,
     get_tavily_status,
 )
 
@@ -124,3 +125,26 @@ def test_collected_evidence_persists_content_hash(monkeypatch, tmp_path) -> None
     stored_item = next(item for item in stored if item["id"] == result["evidence_items"][0]["id"])
 
     assert stored_item["content_hash"] == result["evidence_items"][0]["content_hash"]
+
+
+def test_batch_collection_deduplicates_content_hash_across_queries() -> None:
+    class FakeProvider:
+        def search(self, query: str, **kwargs):
+            suffix = "same" if "product" in query else "other"
+            return {"results": [{"title": suffix, "url": f"https://example.com/{suffix}", "score": 0.8}]}
+
+        def extract(self, urls, **kwargs):
+            url = urls[0]
+            content = "The same extracted page body." if url.endswith("/same") else "A second extracted page body."
+            return {"results": [{"url": url, "raw_content": content}], "failed_results": []}
+
+    result = collect_public_web_evidence_batch(
+        queries=["product", "product follow-up", "pricing"],
+        provider=FakeProvider(),
+    )
+
+    assert result["status"] == "completed"
+    assert len(result["query_results"]) == 3
+    assert len(result["evidence_items"]) == 2
+    assert len({item["content_hash"] for item in result["evidence_items"]}) == 2
+    assert all("query" in entry for entry in result["collection_trace"])

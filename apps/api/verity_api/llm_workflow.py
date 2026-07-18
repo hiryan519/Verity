@@ -15,6 +15,7 @@ from .qa import run_qa_gate
 
 DEFAULT_DIMENSIONS = ("产品定位", "定价策略")
 PARALLEL_EXPERTS = ("product_analyst", "pricing_analyst")
+ONLINE_PARALLEL_EXPERTS = ("product_analyst", "pricing_analyst", "user_experience_analyst")
 
 
 def run_llm_expert_workflow(
@@ -23,6 +24,10 @@ def run_llm_expert_workflow(
     dimensions: list[str] | None = None,
     scope_overrides: dict[str, Any] | None = None,
     executor: Callable[[str, dict[str, Any]], dict[str, Any]] = execute_llm_expert,
+    expert_ids: tuple[str, ...] | None = None,
+    evidence_source: str = "local-db",
+    is_real_research: bool = False,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """Run the smallest governed LLM workflow over an existing evidence set.
 
@@ -41,7 +46,8 @@ def run_llm_expert_workflow(
             "is_real_research": False,
         }
 
-    run_id = f"llm_run_{uuid4().hex[:10]}"
+    run_id = run_id or f"llm_run_{uuid4().hex[:10]}"
+    selected_experts = expert_ids or PARALLEL_EXPERTS
     selected_dimensions = dimensions or list(DEFAULT_DIMENSIONS)
     scope = _build_scope(report, selected_dimensions, scope_overrides or {})
     evidence_items = list_evidence(report_id)
@@ -54,7 +60,7 @@ def run_llm_expert_workflow(
     }
 
     expert_results: dict[str, dict[str, Any]] = {}
-    with ThreadPoolExecutor(max_workers=len(PARALLEL_EXPERTS)) as pool:
+    with ThreadPoolExecutor(max_workers=len(selected_experts)) as pool:
         futures = {
             pool.submit(
                 executor,
@@ -65,16 +71,16 @@ def run_llm_expert_workflow(
                     evidence_slice,
                 ),
             ): expert_id
-            for expert_id in PARALLEL_EXPERTS
+            for expert_id in selected_experts
         }
         for future in as_completed(futures):
             expert_id = futures[future]
             expert_results[expert_id] = future.result()
 
-    if not _all_completed(expert_results, PARALLEL_EXPERTS):
+    if not _all_completed(expert_results, selected_experts):
         return _workflow_failure(run_id, report_id, expert_results, "parallel_expert_failed")
 
-    claims = _normalize_claims(expert_results, evidence_items, run_id)
+    claims = _normalize_claims(expert_results, evidence_items, run_id, selected_experts)
     analysis_pack = build_analysis_pack(
         report_id=report_id,
         research_goal=report["summary"],
@@ -85,14 +91,25 @@ def run_llm_expert_workflow(
 
     analysis_pack["workflow"] = {
         "run_id": run_id,
-        "expert_ids": list(PARALLEL_EXPERTS),
-        "evidence_source": "local-db",
+        "expert_ids": list(selected_experts),
+        "evidence_source": evidence_source,
         "is_real_llm_execution": True,
-        "is_real_research": False,
+        "is_real_research": is_real_research,
     }
     analysis_pack["expert_outputs"] = {
-        expert_id: expert_results[expert_id].get("output", {}) for expert_id in PARALLEL_EXPERTS
+        expert_id: expert_results[expert_id].get("output", {}) for expert_id in selected_experts
     }
+    expert_data_gaps = []
+    for expert_id in selected_experts:
+        output = expert_results[expert_id].get("output", {})
+        for gap in output.get("data_gaps", []):
+            if isinstance(gap, dict):
+                expert_data_gaps.append(gap)
+            elif str(gap).strip():
+                expert_data_gaps.append({"dimension": expert_id, "gap": str(gap)})
+    analysis_pack["expert_data_gaps"] = expert_data_gaps
+    existing_gaps = analysis_pack.get("data_gaps", [])
+    analysis_pack["data_gaps"] = [*existing_gaps, *expert_data_gaps]
 
     cross_payload = {
         **base_payload,
@@ -100,11 +117,18 @@ def run_llm_expert_workflow(
         "candidate_memory_hints": _memory_context("cross_validator")[1],
         "analysis_packs": [
             {"expert_id": expert_id, "output": expert_results[expert_id].get("output", {})}
-            for expert_id in PARALLEL_EXPERTS
+            for expert_id in selected_experts
         ],
         "claim_evidence_index": analysis_pack["claim_evidence_map"],
     }
     cross_result = executor("cross_validator", cross_payload)
+    cross_retry_count = 0
+    if is_real_research and not _completed(cross_result):
+        cross_retry_count = 1
+        cross_result = executor(
+            "cross_validator",
+            _compact_cross_retry_payload(cross_payload),
+        )
     expert_results["cross_validator"] = cross_result
     if not _completed(cross_result):
         return _workflow_failure(run_id, report_id, expert_results, "cross_validation_failed", analysis_pack)
@@ -113,6 +137,7 @@ def run_llm_expert_workflow(
     qa_brief = _build_qa_brief(analysis_pack, cross_output)
     analysis_pack["cross_validation_pack"] = cross_output
     analysis_pack["qa_brief"] = qa_brief
+    analysis_pack["workflow"]["cross_validation_retry_count"] = cross_retry_count
 
     qa_payload = {
         **base_payload,
@@ -138,6 +163,7 @@ def run_llm_expert_workflow(
         analysis_pack=analysis_pack,
         qa_result=qa_gate_result,
         updated_at=datetime.now(timezone.utc).isoformat(),
+        data_source=("llm-expert-over-tavily-evidence" if is_real_research else "llm-expert-over-local-evidence"),
     )
 
     return {
@@ -150,8 +176,12 @@ def run_llm_expert_workflow(
         "qa_gate": qa_gate_result,
         "is_real_workflow": True,
         "is_real_llm_execution": True,
-        "is_real_research": False,
-        "boundary": "真实 LLM 专家执行 over local-db evidence; Tavily online collection is not connected.",
+        "is_real_research": is_real_research,
+        "boundary": (
+            "真实 LLM 专家执行 over Tavily-extracted public-web evidence."
+            if is_real_research
+            else "真实 LLM 专家执行 over local-db evidence; this is not online research."
+        ),
     }
 
 
@@ -182,6 +212,9 @@ def _build_scope(report: dict[str, Any], dimensions: list[str], overrides: dict[
         "audience": "not_specified",
         "time_range": "current_report_scope",
     }
+    if isinstance(report.get("scope"), dict):
+        scope.update(report["scope"])
+    scope["dimensions"] = dimensions
     scope.update(overrides)
     return scope
 
@@ -208,13 +241,24 @@ def _evidence_slice_item(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def _normalize_claims(
-    expert_results: dict[str, dict[str, Any]], evidence_items: list[dict[str, Any]], run_id: str
+    expert_results: dict[str, dict[str, Any]],
+    evidence_items: list[dict[str, Any]],
+    run_id: str,
+    expert_ids: tuple[str, ...],
 ) -> list[dict[str, Any]]:
     evidence_by_id = {item["id"]: item for item in evidence_items}
     claims: list[dict[str, Any]] = []
-    for expert_id, default_dimension in (("product_analyst", "产品定位"), ("pricing_analyst", "定价策略")):
+    dimensions = {
+        "product_analyst": "产品定位",
+        "pricing_analyst": "定价策略",
+        "user_experience_analyst": "用户体验",
+    }
+    for expert_id in expert_ids:
         output = expert_results[expert_id].get("output", {})
-        for index, raw_claim in enumerate(output.get("claims", [])):
+        raw_claims = output.get("claims", [])
+        if expert_id == "user_experience_analyst":
+            raw_claims = output.get("experience_claims", [])
+        for index, raw_claim in enumerate(raw_claims):
             if not isinstance(raw_claim, dict):
                 continue
             text = raw_claim.get("claim_text") or raw_claim.get("claim") or raw_claim.get("text")
@@ -235,7 +279,7 @@ def _normalize_claims(
                     "text": text.strip(),
                     "status": status,
                     "strength": "strong" if status == "supported" and "high" in levels else "weak",
-                    "dimension": raw_claim.get("dimension") or default_dimension,
+                    "dimension": raw_claim.get("dimension") or dimensions.get(expert_id, "未分类"),
                     "evidence_ids": evidence_ids,
                     "risk_note": str(risk_note),
                 }
@@ -262,6 +306,31 @@ def _build_qa_brief(analysis_pack: dict[str, Any], cross_output: dict[str, Any])
             *analysis_pack.get("data_gaps", [])[:5],
             *cross_output.get("downgrade_suggestions", [])[:5],
         ],
+    }
+
+
+def _compact_cross_retry_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Retry cross validation with only comparison-relevant fields.
+
+    A failed structured response should not be retried with the same oversized
+    pack. The retry preserves claim/evidence mappings, gaps and risks while
+    dropping long narrative fields and pricing tables.
+    """
+    compact_packs = []
+    for pack in payload.get("analysis_packs", []):
+        output = pack.get("output", {}) if isinstance(pack, dict) else {}
+        claims = output.get("claims") or output.get("experience_claims") or []
+        compact_output = {
+            "claims": claims[:30] if isinstance(claims, list) else [],
+            "data_gaps": output.get("data_gaps", [])[:12] if isinstance(output.get("data_gaps", []), list) else [],
+            "risk_notes": output.get("risk_notes", [])[:12] if isinstance(output.get("risk_notes", []), list) else [],
+            "semantic_risks": output.get("semantic_risks", [])[:12] if isinstance(output.get("semantic_risks", []), list) else [],
+        }
+        compact_packs.append({"expert_id": pack.get("expert_id"), "output": compact_output})
+    return {
+        **payload,
+        "analysis_packs": compact_packs,
+        "retry_instruction": "上一次交叉验证输出未通过结构化校验。本次仅返回符合输出结构约束的 JSON，不要添加 Markdown、解释文字或额外字段。",
     }
 
 
