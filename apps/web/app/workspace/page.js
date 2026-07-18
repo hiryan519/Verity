@@ -1,62 +1,57 @@
 import Link from "next/link";
-import { SectionTitle } from "@/components/ui";
-import { getApiData, toReportCard } from "@/lib/api";
-
-export const dynamic = "force-dynamic";
+import { ArrowUp, BadgeDollarSign, MessagesSquare, NotebookTabs, Presentation } from "lucide-react";
 
 const examples = [
-  "分析 Notion AI、飞书妙记、Gamma 在 AI 协作写作场景下的产品策略",
-  "比较 Linear、Jira、Asana 的团队协作和定价边界",
-  "研究 Gamma、Tome、Canva AI 的生成式演示工具定位"
+  { Icon: NotebookTabs, title: "AI 笔记产品竞品分析", body: "比较目标用户、核心场景、价格层级和用户口碑。" },
+  { Icon: BadgeDollarSign, title: "B2B SaaS 定价策略", body: "拆解套餐边界、免费额度、团队版卖点和证据缺口。" },
+  { Icon: Presentation, title: "生成式演示工具定位", body: "比较 Gamma、Tome、Canva AI 在交付链路中的差异。" },
+  { Icon: MessagesSquare, title: "用户体验与机会点", body: "汇总公开反馈，标记高频痛点、冲突证据和数据缺口。" }
 ];
 
-export default async function WorkspacePage() {
-  const { dataSource, items, error } = await getApiData("/api/reports");
-  const reports = items.map(toReportCard);
-  const sourceLabel = dataSource ? `${dataSource.mode} · ${dataSource.seed} seed` : "API 未连接";
-
+export default function WorkspacePage() {
   return (
-    <div>
-      <SectionTitle
-        eyebrow="Workspace"
-        title="让竞品研究像证据档案一样可读、可复查、可追溯。"
-        description="输入一个研究目标，Verity 先进入调研范围确认，再由 Orchestrator 调度专家 Agent。当前阶段为 Mock 产品形态，未接入真实在线抓取。"
-        badge="Mock workflow"
-      />
+    <section className="hero">
+      <div className="hero-shell">
+        <h1>下午好，林研究员</h1>
+        <p className="hero-copy">你的 AI 竞品分析 Agent —— 多领域专家协作，无证据不立论</p>
 
-      <section className="panel p-5">
-        <textarea
-          className="min-h-[128px] w-full resize-y border-0 bg-transparent font-editorial text-base leading-8 outline-none placeholder:text-black/35"
-          placeholder="例如：分析 Notion AI、飞书妙记、Gamma 在 AI 协作写作场景下的产品策略、定价与用户反馈差异"
-        />
-        <div className="mt-4 flex items-center justify-between border-t border-[color:var(--line)] pt-4">
-          <span className="text-xs text-[color:var(--muted)]">数据源：{sourceLabel} · 不代表真实抓取</span>
-          <Link href="/research/new" className="btn btn-primary">确认调研范围</Link>
+        <div className="prompt-card">
+          <textarea
+            aria-label="Research goal"
+            placeholder="想分析哪个市场、公司或竞争策略？例如：比较 Cursor、GitHub Copilot 与 Windsurf 在 AI 编程工具市场的定位、定价和用户体验。"
+          />
+          <div className="prompt-actions">
+            <div className="composer-meta">
+              <span className="chip sage">任务编排 Agent</span>
+              <span>默认进入调研范围确认</span>
+            </div>
+            <Link href="/research/new" className="composer-submit" aria-label="提交调研目标">
+              <ArrowUp aria-hidden="true" />
+            </Link>
+          </div>
         </div>
-      </section>
 
-      <div className="mt-4 grid-3">
-        {examples.map((example) => (
-          <Link key={example} href="/research/new" className="panel p-4">
-            <h2 className="card-title">{example}</h2>
-            <p className="mt-3 text-sm leading-6 text-black/60">进入 Human Gate 后再确认竞品、维度、市场和时间范围。</p>
-          </Link>
-        ))}
-      </div>
-
-      <section className="mt-10">
-        <h2 className="mb-3 text-sm font-semibold">最近调研</h2>
-        {error ? <p className="mb-3 text-sm text-[color:var(--warning)]">API 未连接：{error}</p> : null}
-        <div className="grid-3">
-          {reports.map((report) => (
-            <Link key={report.id} href={`/reports/${report.id}`} className="panel p-4">
-              <span className="chip chip-sage">{report.qaStatus}</span>
-              <h3 className="card-title mt-4">{report.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-black/60">{report.summary}</p>
+        <p className="sample-title">试试这些示例</p>
+        <div className="example-grid">
+          {examples.map(({ Icon, title, body }) => (
+            <Link key={title} href="/research/new" className="example-card">
+              <span className="sample-icon"><Icon aria-hidden="true" /></span>
+              <strong>{title}</strong>
+              <p>{body}</p>
             </Link>
           ))}
         </div>
-      </section>
-    </div>
+
+        <Link href="/experts" className="expert-strip">
+          <div className="avatar-stack" aria-label="Expert Agent group">
+            {[
+              ["编", "研究编排专家"], ["证", "证据采集专家"], ["产", "产品分析专家"], ["价", "定价策略专家"],
+              ["验", "交叉验证专家"], ["体", "用户体验分析专家"], ["QA", "QA 质检专家"], ["撰", "报告撰写专家"]
+            ].map(([short, name]) => <span key={name} className="stack-avatar" title={name}>{short}</span>)}
+          </div>
+          <span>查看全部专家</span>
+        </Link>
+      </div>
+    </section>
   );
 }

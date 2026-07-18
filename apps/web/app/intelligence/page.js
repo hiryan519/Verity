@@ -1,23 +1,33 @@
-import { SectionTitle } from "@/components/ui";
+import { BarChart3, FileSearch, Network, UsersRound } from "lucide-react";
+
+const modules = [
+  { Icon: FileSearch, title: "报告概览", body: "等待真实报告与结构化结论数据接入。" },
+  { Icon: Network, title: "信源结构", body: "只展示可复查证据的来源分布，不生成装饰性图表。" },
+  { Icon: UsersRound, title: "专家贡献", body: "后续基于真实 Trace 统计专家参与与阶段产出。" }
+];
 
 export default function IntelligencePage() {
   return (
-    <div>
-      <SectionTitle
-        eyebrow="Competitive Intelligence"
-        title="竞争情报中心"
-        description="情报中心后续只能展示来自结构化数据和可复查证据的指标。当前为 P1 占位，不展示无法解释的夸大指标。"
-        badge="P1 placeholder"
-      />
+    <section className="asset-page route-section">
+      <div className="section-head">
+        <div>
+          <p className="eyebrow">Competitive Intelligence</p>
+          <h2>竞争情报中心</h2>
+          <p>聚合跨报告的结构化研究信号。指标必须来自可复查证据、报告和 Trace，不能用 Mock 图表暗示真实市场趋势。</p>
+        </div>
+        <span className="preview-pill">P1 占位 · 暂无真实指标</span>
+      </div>
 
-      <div className="grid-3">
-        {["报告概览", "信源结构", "专家贡献"].map((title) => (
-          <article key={title} className="panel p-5">
-            <h2 className="card-title">{title}</h2>
-            <p className="mt-3 text-sm leading-6 text-black/60">等待 SQLite 结构化数据接入后展示。Mock 阶段不生成装饰性图表。</p>
-          </article>
+      <div className="intelligence-strip">
+        <BarChart3 aria-hidden="true" />
+        <div><strong>等待结构化数据接入</strong><span>当前只建立页面信息边界，不展示无法解释的增长率、舆情规模或市场份额。</span></div>
+      </div>
+
+      <div className="intelligence-grid">
+        {modules.map(({ Icon, title, body }) => (
+          <article key={title} className="intelligence-card"><Icon aria-hidden="true" /><h3>{title}</h3><p>{body}</p><span>待接入</span></article>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

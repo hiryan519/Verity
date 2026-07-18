@@ -1,10 +1,13 @@
 # Verity Design System
 
-版本：v0.1  
-状态：已定稿为当前阶段 UI 视觉规范  
-视觉样例：`docs/verity-living-design-system.html`
+版本：v0.2  
+状态：已按当前 UI Preview 定稿为页面级视觉规范  
+视觉样例：
 
-本文档定义 Verity 后续 Web UI 开发的视觉、排版、组件和交互规范。后续实现页面时，应优先遵循本文档；如果与产品机制冲突，以 `AGENTS.md` 中的产品决策优先级为准。
+- 基础视觉系统：`docs/verity-living-design-system.html`
+- 页面级落地基准：`docs/verity-ui-design-preview.html`
+
+本文档定义 Verity 后续 Web UI 开发的视觉、排版、组件和交互规范。后续实现页面时，应优先遵循本文档；如本文档与当前已确认的 `docs/verity-ui-design-preview.html` 页面效果冲突，以当前 HTML 预览为准并同步修订本文档；如果与产品机制冲突，以 `AGENTS.md` 中的产品决策优先级为准。
 
 ## 1. 设计哲学
 
@@ -77,6 +80,8 @@ Web 实现可使用：
 - 报告正文。
 - 结论预览文本。
 - 需要形成“智库、出版、研究档案”气质的长文本。
+- Agent 动作流中的长段输出正文。
+- Trace 卡片中的动作标题 / 决策摘要可使用 serif，以降低操作控件感。
 
 使用 `font-sans` 的区域：
 
@@ -90,10 +95,13 @@ Web 实现可使用：
 - Citation Pill。
 - 数据数字、时间戳、Token、耗时。
 - Caption 和辅助说明。
+- Trace 阶段筛选器、模型标签、工具 / Memory / Skill 元信息。
+- 专家卡片名称、层级、模型、工具权限、治理摘要。
 
 重要规则：
 
-- Serif 段落中嵌入的证据锚点、置信度标签仍然必须显式使用 sans。
+- 报告长正文应尽量保持纯净阅读流。证据引用、置信度、章节信源可以放在章节信源底栏或侧栏中，避免在长段正文中插入过多胶囊标签。
+- 如果在 serif 段落中嵌入证据锚点、置信度标签，仍然必须显式使用 sans，并确保不破坏行高。
 - 长正文行高建议 `1.7` 或 `leading-relaxed`。
 - UI 数据标签保持 `12px` 或 `text-xs`，不要放大成标题。
 - 主正文建议 `14px`，报告正文可以在阅读页根据密度提升到 `15px` 或 `16px`，但需要保持三栏可读。
@@ -114,6 +122,13 @@ Web 实现可使用：
 - 仅悬浮工具条、下拉层、证据展开层可使用极弱阴影。
 - 推荐 `shadow-sm` 或等价的极轻阴影。
 - 禁止大面积弥散阴影、玻璃拟态重模糊和发光边框。
+
+浅色日志 / 动作块：
+
+- Trace 展开区、Prompt / Output 日志块、Agent 动作流可使用极浅暖灰或浅绿底，例如 `rgba(249, 250, 249, 0.9)`。
+- 这类浅色块用于提高信息分隔和审计感，不用于制造重卡片层级。
+- 边框仍使用 `1px solid #E5E5E5` 或弱化后的透明边框。
+- 代码 / 日志区可隐藏滚动条但保留滚动能力，避免破坏精密感。
 
 按钮与标签：
 
@@ -160,6 +175,8 @@ Verity 的页面布局应服务于“调研、阅读、追溯”三类任务。
 交互重点：
 
 - Agent 工作过程必须拆解为可理解动作。
+- 中栏动作流保留白色大画布，但每条 Agent 动作可使用极浅色背景块分隔，避免动作混在一起。
+- Agent 动作块不是聊天气泡，也不拟人化；头像只作为 Agent 类型标识。
 - 右侧证据出现时需标注来源、时间、可信度、风险。
 - Mock 数据必须明确标记为 Mock，不暗示真实抓取。
 
@@ -174,22 +191,71 @@ Verity 的页面布局应服务于“调研、阅读、追溯”三类任务。
 阅读规则：
 
 - 报告正文使用 serif。
-- 结论后紧跟 Citation Pill。
-- 点击证据锚点应定位右侧证据卡，不应打断阅读流。
+- 报告正文优先保持纯净阅读流，不强制在每个结论后紧贴 Citation Pill。
+- 章节末尾可使用“章节信源底栏”集中展示本章证据编号、信源入口和按批注深化动作。
+- 点击证据编号、章节信源或侧栏证据，应定位或高亮右侧证据卡，不应打断阅读流。
 - 低置信、冲突、数据缺口必须在正文或侧栏显式提示。
+- 右侧 Inspector 应区分“知识库 / 标注”和“证据来源”等 Tab；真实实现中 Tab 选中态应只展示对应内容，不混放无关信息。
 
 ### 5.5 决策链路页
 
 决策链路不是原始日志倾倒，而是面向用户的决策回放。
 
+当前页面级基准采用居中单栏 Audit Log 时间轴，而不是左右分栏仪表盘。
+
 应包含：
 
-- 阶段筛选。
+- 顶部标题、说明和全局统计。
+- 水平阶段筛选器。
 - 总 Token、耗时、步骤数。
-- 单步 Prompt / Input / Output 展开。
+- 垂直时间轴、步骤编号、Step Card。
+- 单步 Prompt / Input / Output 展开，使用极浅色代码日志区。
+- 本次运行上下文，包括 Model、Tools Used、Memory Used、Skill Used。
 - Agent、阶段、任务、状态、关联证据和关联报告章节。
 
 展示前必须脱敏 API Key、Cookie、敏感输入等内容。
+
+规则：
+
+- Trace 页面展示“单次运行事实”，例如本次模型、token、耗时、工具调用、召回记忆和触发 Skill。
+- 专家公会展示长期治理信息，不展示单次运行细节。
+- Prompt / Output 日志使用 mono 字体、较小字号、浅色背景，滚动条可隐藏但保留滚动能力。
+
+### 5.6 专家公会 / 专家治理台
+
+专家公会不是人物卡片库，也不是 Agent Playground。
+
+定位：
+
+```text
+专家公会 = Expert Agent Registry + Expert Governance Console
+```
+
+列表页应展示：
+
+- 专家名称。
+- 专家层级：L3 决策层 / L2 策略层 / L1 执行层。
+- 职责描述。
+- 工具、Memory、输出结构等元信息。
+- 当前模型，例如 `glm-4-air`、`glm-5.2`。
+
+详情页应展示：
+
+- 专家行为规则：只读治理视图，不直接暴露完整底座 System Prompt。
+- 输出结构约束：只读 Schema 摘要，修改需工程校验。
+- 工具权限清单：展示系统内置工具授权，不支持页面新增工具。
+- Memory 治理视图：展示来源、状态和影响，不作为 Memory 编辑器。
+- 挂载 Skill：展示能力摘要和版本，不作为 Skill 源码编辑器。
+
+禁止：
+
+- 把专家页做成自由 Prompt 编辑器。
+- 把专家页做成 MCP 工具安装器。
+- 允许用户直接新增 active memory。
+- 把 Skill 展开成完整源码编辑器。
+- 在专家页展示 temperature、max tokens、top_p 等底层参数，除非后续明确要做系统级管理台。
+
+专家页展示长期治理信息；Trace 展示单次运行事实。
 
 ## 6. 关键组件
 
@@ -220,22 +286,40 @@ Verity 的页面布局应服务于“调研、阅读、追溯”三类任务。
 
 ### 6.2 Citation Pill
 
-用途：跟随在结论性文字后，连接报告正文和证据侧栏。
+用途：连接报告正文、章节信源和证据侧栏。
 
 推荐样式：
 
 - `rounded-md`。
 - 细边框或浅绿背景。
 - `text-xs`。
-- 文案如 `🔗 2条证据`。
+- 文案如 `🔗 2条证据`，或章节信源底栏中的 `[10]`、`[24]` 证据编号。
 
 规则：
 
-- Citation Pill 不应过大，不能破坏正文阅读节奏。
+- Citation Pill / 证据编号不应过大，不能破坏正文阅读节奏。
+- 页面级基准中，报告正文优先使用章节信源底栏承载引用，不强制把 Citation Pill 塞入每个段落。
 - 点击后优先在右侧证据栏展开或高亮证据。
 - 如果证据不足，应显示 `证据不足` 或 `数据缺口`，而不是隐藏。
 
-### 6.3 Agent Action Card
+### 6.3 Chapter Source Footer
+
+用途：在报告章节末尾集中展示本章证据和可执行动作。
+
+应包含：
+
+- `本章信源` 标识。
+- 证据编号胶囊，例如 `[10]`、`[24]`。
+- 可选次级动作，例如 `按批注深化本章`。
+- 辅助说明，例如“先在本章划线写批注，再点此重做”。
+
+规则：
+
+- 使用 sans、小字号、浅绿胶囊，不抢正文。
+- 与正文保持留白，作为章节结束边界。
+- 不应伪造真实证据编号；Mock 阶段需确保整体页面仍有 Mock 标识。
+
+### 6.4 Agent Action Block
 
 用途：展示 Agent 当前动作、工具边界和阶段输出。
 
@@ -250,11 +334,13 @@ Verity 的页面布局应服务于“调研、阅读、追溯”三类任务。
 
 规则：
 
-- Agent Action Card 是过程透明度组件，不是聊天气泡。
+- Agent Action Block 是过程透明度组件，不是聊天气泡。
 - 不应伪装为真人对话。
+- 可放在独立白色画布内，每条动作使用极浅色背景块分隔。
+- 输出正文使用 serif，元信息、状态和耗时使用 sans。
 - 如果是 Mock 状态，必须显式标注。
 
-### 6.4 Evidence Card
+### 6.5 Evidence Card
 
 用途：展示证据库中的单条证据。
 
@@ -275,7 +361,42 @@ Verity 的页面布局应服务于“调研、阅读、追溯”三类任务。
 - 低置信或无法打开的证据必须标注。
 - 多源支持可以作为补充说明，但不能替代证据明细。
 
-### 6.5 Annotation Toolbar
+### 6.6 Trace Context Card
+
+用途：展示单次 Trace Step 的运行上下文。
+
+应包含：
+
+- Model。
+- Tools Used。
+- Memory Used。
+- Skill Used。
+
+规则：
+
+- 该组件只用于 Trace 中的单次运行事实，不放在专家长期配置页。
+- 使用小字号、mono 数字 / code、细边框和浅底。
+- 不能暗示 Mock Trace 已经真实调用模型或工具。
+
+### 6.7 Expert Governance Card
+
+用途：展示 Expert Agent 的长期治理信息。
+
+应包含：
+
+- 专家名称。
+- 层级。
+- 职责。
+- 当前模型。
+- 工具 / Memory / 输出结构摘要。
+
+规则：
+
+- 不使用真人头像，不做游戏角色面板。
+- 不提供自由编辑底座 Prompt、工具安装、Memory 文本编辑和 Skill 源码编辑。
+- 当前模型可以展示；温度、max tokens 等底层参数默认不展示。
+
+### 6.8 Annotation Toolbar
 
 用途：报告阅读页中对段落或选中文本进行标注。
 
@@ -373,6 +494,7 @@ fontFamily: {
 - 页面背景：`bg-workspace text-ink font-sans`
 - 主内容面板：`rounded-xl border border-line bg-surface`
 - 浅绿面板：`rounded-xl border border-line bg-sage-light`
+- 浅色日志 / 动作块：`rounded-xl border border-line bg-[#F9FAF9]`
 - 标签：`rounded-md px-2.5 py-1 text-xs font-medium`
 - 阅读正文：`font-serif text-sm leading-relaxed`
 - UI 元信息：`font-sans text-xs text-ink/50`
@@ -399,12 +521,15 @@ fontFamily: {
 - Mock 是否明确标识。
 - 低置信、冲突、数据缺口是否可见。
 - Trace 展示是否脱敏。
+- Trace 展开是否展示本次 Model / Tools / Memory / Skill，并且不泄露敏感信息。
+- 专家页是否只展示治理信息，不暗示用户可直接编辑 Prompt、Memory、Skill 或新增工具。
 - 页面是否能在常见桌面宽度下稳定阅读。
 
 ## 13. 当前视觉基准
 
 当前定稿视觉基准为：
 
-- `docs/verity-living-design-system.html`
+- 基础视觉系统：`docs/verity-living-design-system.html`
+- 页面级落地基准：`docs/verity-ui-design-preview.html`
 
-后续如果设计发生变化，应优先更新该 HTML，再同步更新本文档。
+后续如果页面设计发生变化，应优先更新 `docs/verity-ui-design-preview.html`，再同步更新本文档。真实 Verity 页面实现时，以页面级落地基准为主要复刻对象。

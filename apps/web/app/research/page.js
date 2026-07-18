@@ -1,42 +1,48 @@
 import Link from "next/link";
-import { SectionTitle } from "@/components/ui";
+import { ArrowUpRight, GitBranch } from "lucide-react";
 import { getApiData, toReportCard } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
+function statusMeta(status) {
+  if (status === "pass") return { label: "已完成", className: "chip sage" };
+  if (status === "risk" || status === "pass_with_risk") return { label: "带风险", className: "chip warn" };
+  return { label: "草稿", className: "chip sage" };
+}
+
 export default async function ResearchListPage() {
   const { dataSource, items, error } = await getApiData("/api/reports");
   const reports = items.map(toReportCard);
-  const badge = dataSource ? `${dataSource.mode} · ${dataSource.seed} seed` : "API 未连接";
 
   return (
-    <div>
-      <SectionTitle
-        eyebrow="Research Assets"
-        title="我的调研"
-        description="历史报告是研究资产，不等同于 Memory。当前从本地 SQLite 读取 mock seed 数据，仍未接入真实 Agent Workflow。"
-        badge={badge}
-      />
-
-      {error ? <p className="mb-3 text-sm text-[color:var(--warning)]">API 未连接：{error}</p> : null}
-      <div className="grid-3">
-        {reports.map((report) => (
-          <article key={report.id} className="panel p-4">
-            <span className={report.qaStatus === "pass" ? "chip chip-sage" : report.qaStatus === "risk" ? "chip chip-warning" : "chip chip-sage"}>{report.qaStatus}</span>
-            <h2 className="card-title mt-4">{report.title}</h2>
-            <p className="mt-2 text-sm leading-6 text-black/60">{report.summary}</p>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-black/55">
-              <span>证据 {report.evidenceCount}</span>
-              <span>结论 {report.claimCount}</span>
-              <span>高可信 {report.highConfidenceCount}</span>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Link href={`/reports/${report.id}`} className="btn btn-primary">报告</Link>
-              <Link href={`/reports/${report.id}/trace`} className="btn btn-secondary">Trace</Link>
-            </div>
-          </article>
-        ))}
+    <section className="research-page route-section">
+      <div className="section-head">
+        <div>
+          <p className="eyebrow">Research Assets</p>
+          <h2>我的调研</h2>
+          <p>历史报告是可持续复查的研究资产，不等同于 Research Memory。每份报告拥有稳定访问路径，并保留报告与决策链路入口。</p>
+        </div>
+        <span className="preview-pill">{dataSource ? `${dataSource.mode} · ${dataSource.seed}` : "API 未连接"}</span>
       </div>
-    </div>
+
+      {error ? <p className="asset-notice">API 未连接：{error}</p> : null}
+      <div className="research-grid">
+        {reports.map((report) => {
+          const status = statusMeta(report.qaStatus);
+          return (
+            <article key={report.id} className="research-card">
+              <div className="research-card-top"><span className={status.className}>{status.label}</span><span>{report.updatedAt}</span></div>
+              <h3>{report.title}</h3>
+              <p>{report.summary}</p>
+              <div className="research-card-stats"><span>{report.evidenceCount} 条证据</span><span>{report.claimCount} 个结论</span><span>{report.highConfidenceCount} 个高置信</span></div>
+              <div className="research-card-actions">
+                <Link href={`/reports/${report.id}`}>打开报告 <ArrowUpRight aria-hidden="true" /></Link>
+                <Link href={`/reports/${report.id}/trace`}><GitBranch aria-hidden="true" />决策链路</Link>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }
