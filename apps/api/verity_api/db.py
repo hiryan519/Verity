@@ -59,6 +59,7 @@ def init_db() -> None:
                 retrieval_status TEXT NOT NULL,
                 claim_types_json TEXT NOT NULL,
                 summary TEXT NOT NULL,
+                content_hash TEXT NOT NULL DEFAULT '',
                 confidence INTEGER NOT NULL,
                 confidence_level TEXT NOT NULL,
                 scores_json TEXT NOT NULL,
@@ -151,6 +152,7 @@ def init_db() -> None:
             """
         )
         _ensure_memory_columns(connection)
+        _ensure_evidence_columns(connection)
         seed_if_empty(connection)
         seed_knowledge_if_empty(connection)
 
@@ -176,6 +178,12 @@ def _ensure_memory_columns(connection: sqlite3.Connection) -> None:
     for column, definition in additions.items():
         if column not in columns:
             connection.execute(f"ALTER TABLE research_memories ADD COLUMN {column} {definition}")
+
+
+def _ensure_evidence_columns(connection: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in connection.execute("PRAGMA table_info(evidence_items)").fetchall()}
+    if "content_hash" not in columns:
+        connection.execute("ALTER TABLE evidence_items ADD COLUMN content_hash TEXT NOT NULL DEFAULT ''")
 
 
 def _load_json(row: sqlite3.Row, key: str):
@@ -593,6 +601,60 @@ def list_evidence(report_id: str | None = None) -> list[dict]:
     with get_connection() as connection:
         rows = connection.execute(query, params).fetchall()
     return [_evidence_from_row(row) for row in rows]
+
+
+def persist_collected_evidence(report_id: str, evidence_items: list[dict[str, Any]]) -> int:
+    """Persist evidence collected from an external provider with explicit provenance."""
+    init_db()
+    with get_connection() as connection:
+        report = connection.execute("SELECT id FROM reports WHERE id = ?", (report_id,)).fetchone()
+        if not report:
+            return 0
+        connection.executemany(
+            """
+            INSERT OR REPLACE INTO evidence_items (
+                id, report_id, title, url, source_type, platform, source_label,
+                captured_at, retrieval_status, claim_types_json, summary, content_hash,
+                confidence, confidence_level, scores_json, risk_note
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    item["id"],
+                    report_id,
+                    item["title"],
+                    item.get("url"),
+                    item["source_type"],
+                    item["platform"],
+                    item["source_label"],
+                    item["captured_at"],
+                    item["retrieval_status"],
+                    _json(item.get("claim_types", [])),
+                    item["summary"],
+                    item.get("content_hash", ""),
+                    item["confidence"],
+                    item["confidence_level"],
+                    _json(item["scores"]),
+                    item["risk_note"],
+                )
+                for item in evidence_items
+            ],
+        )
+        count = connection.execute(
+            "SELECT COUNT(*) FROM evidence_items WHERE report_id = ?", (report_id,)
+        ).fetchone()[0]
+        high_count = connection.execute(
+            "SELECT COUNT(*) FROM evidence_items WHERE report_id = ? AND confidence_level = 'high'",
+            (report_id,),
+        ).fetchone()[0]
+        connection.execute(
+            """
+            UPDATE reports SET evidence_count = ?, high_confidence_count = ?,
+                data_source = 'tavily-public-web-evidence' WHERE id = ?
+            """,
+            (count, high_count, report_id),
+        )
+    return len(evidence_items)
 
 
 def list_knowledge_items() -> list[dict]:
@@ -1174,6 +1236,7 @@ def _evidence_from_row(row: sqlite3.Row) -> dict:
         "retrieval_status": row["retrieval_status"],
         "claim_types": _load_json(row, "claim_types_json"),
         "summary": row["summary"],
+        "content_hash": row["content_hash"],
         "confidence": row["confidence"],
         "confidence_level": row["confidence_level"],
         "level": row["confidence_level"],

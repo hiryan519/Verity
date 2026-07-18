@@ -19,6 +19,7 @@ from .db import (
     list_evidence,
     list_reports,
     list_trace_steps,
+    persist_collected_evidence,
     replace_trace_steps,
     record_memory_signal,
     update_memory_status,
@@ -40,6 +41,7 @@ from .system_module_registry import (
     get_system_module_contract,
     list_system_module_contracts,
 )
+from .tavily_adapter import collect_public_web_evidence, get_tavily_status
 from .verity_experts import VerityExpertRunner
 
 
@@ -81,6 +83,15 @@ class LLMExpertExecutionRequest(BaseModel):
 class LLMWorkflowRequest(BaseModel):
     dimensions: list[str] = Field(default_factory=lambda: ["产品定位", "定价策略"])
     scope_overrides: dict = Field(default_factory=dict)
+
+
+class EvidenceCollectionRequest(BaseModel):
+    query: str
+    report_id: str | None = None
+    user_urls: list[str] = Field(default_factory=list)
+    max_results: int = 5
+    include_domains: list[str] = Field(default_factory=list)
+    exclude_domains: list[str] = Field(default_factory=list)
 
 
 @asynccontextmanager
@@ -198,6 +209,14 @@ def llm_status() -> dict:
     }
 
 
+@app.get("/api/tavily/status")
+def tavily_status() -> dict:
+    return {
+        "data_source": {"mode": "tavily-provider-status", "is_real_online_collection": False},
+        "item": get_tavily_status(),
+    }
+
+
 @app.post("/api/llm/experts/{expert_id}/prepare")
 def llm_expert_prepare(expert_id: str, payload: LLMExpertExecutionRequest) -> dict:
     return {
@@ -232,6 +251,29 @@ def llm_report_run(report_id: str, payload: LLMWorkflowRequest) -> dict:
             "is_real_workflow": result.get("is_real_workflow", False),
             "is_real_llm_execution": result.get("is_real_llm_execution", False),
             "is_real_research": result.get("is_real_research", False),
+        },
+        "item": result,
+    }
+
+
+@app.post("/api/evidence/collect")
+def evidence_collect(payload: EvidenceCollectionRequest) -> dict:
+    result = collect_public_web_evidence(
+        query=payload.query,
+        user_urls=payload.user_urls,
+        max_results=payload.max_results,
+        include_domains=payload.include_domains,
+        exclude_domains=payload.exclude_domains,
+    )
+    persisted_count = 0
+    if payload.report_id and result.get("evidence_items"):
+        persisted_count = persist_collected_evidence(payload.report_id, result["evidence_items"])
+    result["persisted_count"] = persisted_count
+    return {
+        "data_source": {
+            "mode": "tavily-evidence-collection",
+            "is_real_online_collection": result.get("is_real_online_collection", False),
+            "is_real_research": result.get("is_real_online_collection", False),
         },
         "item": result,
     }
@@ -427,5 +469,12 @@ def _report_data_source(report: dict) -> dict:
             "is_real_workflow": True,
             "is_real_llm_execution": False,
             "is_real_research": False,
+        }
+    if source == "tavily-public-web-evidence":
+        return {
+            "mode": source,
+            "is_real_workflow": False,
+            "is_real_llm_execution": False,
+            "is_real_research": True,
         }
     return DATA_SOURCE
