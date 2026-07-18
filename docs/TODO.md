@@ -30,6 +30,184 @@
   - QA `rework` 不触发 Report Writer，也不显示虚假的“报告已完成”。
   - QA `pass` / `pass_with_risk` 时可以读取真实报告资产，并保留 Claim / Evidence 关联。
 
+## Phase Task Archive（保留原第一至第五阶段任务）
+
+> 本节保留项目最初的 P0–P5 阶段拆分、任务目标和验收边界，避免阶段任务因为主线重排而丢失。当前真正执行顺序以 `Task Order` 为准；P4、P5 的任务分别映射到 `P4`、`B5`，不是新的重复任务编号。
+
+### Phase 0：开发前确认
+
+#### [x] P0-T1：确认技术栈
+
+- Scope: 确认 Next.js Web、FastAPI Adapter、SQLite local-db 和 Evolva wrapper 的边界。
+- Acceptance criteria: 架构文档明确技术选型、启动命令、Mock / real 切换方式和不深改 Evolva 内核的约束。
+- Status: completed。
+
+#### [x] P0-T2：细化 Evidence Confidence 规则
+
+- Scope: 定义来源权威性、相关性、可复查性、时效性、具体性、多源支持和风险扣分维度，以及高 / 中 / 低阈值。
+- Acceptance criteria: 同一条 Evidence 可以解释评分来源；Evidence Confidence 不被当作事实真伪判断；低可信 Evidence 不支撑强 Claim。
+- Status: completed（规则和最小实现见 `docs/MECHANISM.md`）。
+
+#### [x] P0-T3：细化 QA Gate 规则
+
+- Scope: 定义 Analysis Pack 的 QA 评分维度、`pass` / `rework` 输出、问题与建议结构及最多 1 次返工。
+- Acceptance criteria: 低证据充分性可触发 `rework`；返工原因可追踪；不会出现无限 Agent 循环。
+- Status: completed（真实返工 Workflow 仍由 B3 / B5 验证）。
+
+#### [x] P0-T4：细化 Research Memory 规则
+
+- Scope: 区分知识库、证据库、历史报告、Research Memory 和 Skill；定义 Candidate / Active / Quarantined / Archived 及召回边界。
+- Acceptance criteria: Memory 必须影响后续 Agent 行为；低置信、冲突未解决或敏感内容不得自动 Active。
+- Status: completed（本地最小治理已完成，增强项为 B1）。
+
+### Phase 1：Mock 形态复刻
+
+#### [x] P1-T1：搭建 Web 应用骨架
+
+- Scope: 建立 Web 应用、全局导航、基础路由和 Mock 数据接入。
+- Acceptance criteria: 工作台、我的调研、知识库、专家公会、竞争情报中心均可打开并跳转。
+- Status: completed。
+
+#### [x] P1-T2：工作台首页
+
+- Scope: 欢迎语、自然语言调研输入、示例任务卡片和开始调研跳转。
+- Acceptance criteria: 首页不展示复杂配置；输入需求后进入范围确认页。
+- Status: completed（真实任务创建在 B3.9）。
+
+#### [x] P1-T3：调研范围确认页
+
+- Scope: 展示 Agent 识别结果，支持竞品、分析维度、市场、用户、时间范围和补充说明。
+- Acceptance criteria: 用户可以确认范围后进入执行页；页面明确体现 Human Gate。
+- Status: completed（真实 scope preview / Human Gate 已在 B3.9 接入代码）。
+
+#### [x] P1-T4：调研执行页
+
+- Scope: 左侧任务流水线、中间专家动作流、右侧 Evidence 库，展示从需求理解到交付的完整阶段。
+- Acceptance criteria: Mock 执行过程可见；Evidence 卡片展示来源和可信度；可进入报告页。
+- Status: completed（真实 Evidence / QA / Trace 接入由 B3.9 收口）。
+
+#### [x] P1-T5：报告阅读页
+
+- Scope: 三栏布局、目录、报告正文、Evidence / 标注 / 知识库侧栏和引用定位。
+- Acceptance criteria: 关键 Claim 可定位 Evidence；Evidence 卡片可打开 URL；首屏展示 QA 摘要。
+- Status: completed（真实 `report_artifact` 阅读由 B3.9 接入）。
+
+#### [x] P1-T6：决策链路页
+
+- Scope: Trace 总览、阶段筛选、步骤列表和单步 Prompt / Input / Output 展开。
+- Acceptance criteria: 展示 Token、耗时和步骤数；可按阶段筛选；单步信息可展开。
+- Status: completed（真实 Trace 优先读取，Mock fallback 显式标识）。
+
+#### [x] P1-T7：我的调研
+
+- Scope: 报告卡片网格、竞品、Evidence 数、Claim 数、高置信数、时间及报告 / Trace 入口。
+- Acceptance criteria: 可从列表打开报告和决策链路；每个报告有独立 URL。
+- Status: completed（后续可继续补充 SQLite reports 筛选）。
+
+#### [x] P1-T8：专家公会
+
+- Scope: 专家卡片列表、层级筛选、专家详情、职责、工具范围和输出结构摘要。
+- Acceptance criteria: 专家按 L1 / L2 / L3 展示；详情页是只读治理视图，不提供 Prompt、工具、Memory 或 Skill 自由编辑。
+- Status: completed（UI Preview 视觉迁移和 Expert Registry API 已完成）。
+
+### Phase 2：结构化数据与业务机制
+
+#### [x] P2-T1：建立 SQLite Schema
+
+- Scope: 建立 reports、expert_agents、evidence_items、claims、analysis_packs、qa_gate_results、trace_steps、annotations、research_memories 等结构。
+- Acceptance criteria: Mock 数据可写入数据库；页面和 API 可从 local-db 读取。
+- Status: completed。
+
+#### [x] P2-T2：实现 Evidence Scoring
+
+- Scope: 实现 Evidence 评分函数、维度分数、总分和风险提示。
+- Acceptance criteria: 分数来源可解释；低可信 Evidence 不支撑强 Claim。
+- Status: completed。
+
+#### [x] P2-T3：实现 Analysis Pack
+
+- Scope: 定义 Analysis Pack Schema，建立 Evidence → Claim 绑定，标注 data gap 和冲突。
+- Acceptance criteria: 关键 Claim 可绑定 Evidence；`unsupported` / `conflicted` Claim 可识别。
+- Status: completed（Mock 阶段 Claim 仍来自规则结构化，不包装成 LLM 自动生成）。
+
+#### [x] P2-T4：实现 QA Gate
+
+- Scope: 对 Analysis Pack 评分，输出 `pass` / `rework`，记录问题、建议和返工次数。
+- Acceptance criteria: 证据不足触发 `rework`；返工次数最多 1 次；状态可落库。
+- Status: completed。
+
+### Phase 3：Evolva 最小接入
+
+#### [x] P3-T1：调研 Evolva 接入点
+
+- Scope: 确认 Workflow、Loop、Trace、Memory、Skills、Multi-Agent 和工具调用边界。
+- Acceptance criteria: 写出接入说明，明确复用能力与 Verity wrapper 边界。
+- Status: completed（见 `docs/EVOLVA_INTEGRATION.md`）。
+
+#### [x] P3-T2：接入 Trace
+
+- Scope: 将 Evolva trace event 映射为 Verity `trace_steps`，完成脱敏并在决策链路页展示。
+- Acceptance criteria: 至少一次 TraceRecorder 级 Workflow 步骤可展示；Prompt / Input / Output 可追溯。
+- Status: completed（不等同于真实竞品研究 Trace）。
+
+#### [x] P3-T3：接入 Expert Agent
+
+- Scope: 将专家配置映射为本地 Expert Agent，支持专家选择、只读并行执行和 Analysis Pack 汇总。
+- Acceptance criteria: 至少 3 个专家参与一次调研；至少 2 个互不依赖专家可并行；结果进入 Analysis Pack。
+- Status: completed（deterministic local-db wrapper；真实 Provider 由 B3.7 覆盖）。
+
+#### [x] P3-T4：接入 Memory
+
+- Scope: Candidate 写入本地表，按规则治理状态，验证 Active Memory 对专家 checklist 或报告风格的最小影响。
+- Acceptance criteria: Memory 至少影响一次后续任务；低置信 Memory 不进入 Active。
+- Status: completed（当前仅本地治理，增强项为 B1）。
+
+#### [x] P3-T5：Evolva Workflow 最小受控接入
+
+- Scope: 使用 Evolva `WorkflowEngine` 驱动版本化本地 Evidence Workflow，并写入 Evidence、Claim、Analysis Pack、QA Gate 和 Trace。
+- Acceptance criteria: 接口显式标注 `is_real_workflow=true`、`is_real_research=false`；Mock、local-db 和 Workflow 来源可区分。
+- Status: completed（这是 B2 的已完成子项，不代表真实 Agent Workflow 深度接入完成）。
+
+### Phase 4：P1 增强（映射到当前 P4）
+
+#### [ ] P4-T1：图表与数据表
+
+- Scope: 雷达图、柱状图、环形图、数据表和 CSV 导出。
+- Acceptance criteria: 每个图表绑定数据表和 Evidence 来源；推断数据显式标注。
+- Status: planned（当前 Task Order 的 P4）。
+
+#### [ ] P4-T2：标注、批注、知识库入口
+
+- Scope: 正文选中、亮点 / 认同 / 存疑 / 待办标注、批注和加入知识库。
+- Acceptance criteria: 批注可定位正文；加入知识库后可检索；不自动写入 Active Memory。
+- Status: planned（当前 Task Order 的 P4）。
+
+#### [ ] P4-T3：知识图谱
+
+- Scope: 基于报告、Claim、Evidence 生成三层图谱，支持拖拽、缩放和节点详情。
+- Acceptance criteria: Evidence 节点可打开来源；Claim 与 Evidence 关系可见。
+- Status: planned（当前 Task Order 的 P4）。
+
+#### [ ] P4-T4：竞争情报中心
+
+- Scope: 核心指标卡、报告概览、信源结构和专家贡献统计。
+- Acceptance criteria: 指标来自真实结构化数据，不展示无法解释的夸大指标。
+- Status: planned（当前 Task Order 的 P4）。
+
+### Phase 5：验证与复盘（映射到当前 B5）
+
+#### [ ] P5-T1：端到端案例验证
+
+- Scope: 选择竞品研究主题，跑通输入、Human Gate、在线 Evidence、专家执行、QA、报告和 Trace。
+- Acceptance criteria: 有完整报告、Evidence 库、QA 输出、Trace 和至少 3 个可解释 bad case。
+- Status: planned（当前 Task Order 的 B5）。
+
+#### [ ] P5-T2：产品复盘
+
+- Scope: 复盘专家选择、Evidence 评分、QA Gate、Trace 和 Memory 是否发挥作用。
+- Acceptance criteria: 输出 Validation Report；必要时更新 `docs/DECISION_LOG.md`、`docs/MECHANISM.md` 和 TODO。
+- Status: planned（当前 Task Order 的 B5）。
+
 ## Task Order
 
 ### [ ] B3.9：真实 Web Workflow 接入与报告阅读闭环
