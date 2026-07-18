@@ -11,6 +11,7 @@ from .db import (
     create_memory_candidate,
     cite_knowledge_as_evidence,
     get_analysis_pack,
+    get_report_artifact,
     get_report,
     create_online_research_run,
     init_db,
@@ -36,6 +37,7 @@ from .expert_execution_contracts import (
 )
 from .llm_execution import execute_llm_expert, get_llm_provider_status, prepare_llm_expert_execution
 from .llm_workflow import ONLINE_PARALLEL_EXPERTS, run_llm_expert_workflow
+from .report_workflow import run_report_writer
 from .mock_data import MOCK_NAVIGATION
 from .qa import run_qa_gate
 from .system_module_registry import (
@@ -119,6 +121,10 @@ class OnlineResearchRunRequest(BaseModel):
     exclude_domains: list[str] = Field(default_factory=list)
 
 
+class ReportWriterRequest(BaseModel):
+    report_outline: dict = Field(default_factory=dict)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -185,6 +191,7 @@ def report_detail(report_id: str) -> dict:
             "claims": list_claims(report_id),
             "evidence": list_evidence(report_id),
             "qa_gate": get_qa_result(report_id),
+            "report_artifact": get_report_artifact(report_id),
             "trace_steps": list_trace_steps(report_id),
         },
     }
@@ -363,6 +370,33 @@ def online_research_run(run_id: str, payload: OnlineResearchRunRequest) -> dict:
             "is_real_workflow": result.get("is_real_workflow", False),
             "is_real_llm_execution": result.get("is_real_llm_execution", False),
             "is_real_research": result.get("is_real_research", False),
+        },
+        "item": result,
+    }
+
+
+@app.post("/api/llm/reports/{report_id}/write")
+def report_write(report_id: str, payload: ReportWriterRequest) -> dict:
+    result = run_report_writer(
+        report_id,
+        report_outline=payload.report_outline or None,
+    )
+    report = get_report(report_id)
+    report_source = (report or {}).get("data_source", "")
+    source = (
+        report_source
+        if report_source.startswith("llm-report-writer-")
+        else "llm-report-writer"
+    )
+    return {
+        "data_source": {
+            "mode": source,
+            "is_real_workflow": result.get("status") in {"completed", "blocked"},
+            "is_real_llm_execution": result.get("expert_result", {}).get("is_real_llm_execution", False),
+            "is_real_report_generation": result.get("is_real_report_generation", False),
+            "is_real_research": result.get("is_real_research", False)
+            or report_source == "llm-expert-over-tavily-evidence",
+            "qa_verdict": result.get("qa_verdict") or (report or {}).get("qa_status"),
         },
         "item": result,
     }
@@ -574,6 +608,22 @@ def _default_online_queries(scope: dict, dimensions: list[str]) -> list[str]:
 
 def _report_data_source(report: dict) -> dict:
     source = report.get("data_source", "")
+    if source == "llm-report-writer-over-local-evidence":
+        return {
+            "mode": source,
+            "is_real_workflow": True,
+            "is_real_llm_execution": True,
+            "is_real_report_generation": True,
+            "is_real_research": False,
+        }
+    if source == "llm-report-writer-over-tavily-evidence":
+        return {
+            "mode": source,
+            "is_real_workflow": True,
+            "is_real_llm_execution": True,
+            "is_real_report_generation": True,
+            "is_real_research": True,
+        }
     if source == "llm-expert-over-local-evidence":
         return {
             "mode": source,

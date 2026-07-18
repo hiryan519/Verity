@@ -89,6 +89,16 @@ def init_db() -> None:
                 FOREIGN KEY (report_id) REFERENCES reports(id)
             );
 
+            CREATE TABLE IF NOT EXISTS report_artifacts (
+                id TEXT PRIMARY KEY,
+                report_id TEXT NOT NULL,
+                status TEXT NOT NULL,
+                qa_verdict TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (report_id) REFERENCES reports(id)
+            );
+
             CREATE TABLE IF NOT EXISTS qa_gate_results (
                 id TEXT PRIMARY KEY,
                 report_id TEXT NOT NULL,
@@ -785,6 +795,51 @@ def get_analysis_pack(report_id: str) -> dict | None:
             (report_id,),
         ).fetchone()
     return _load_json(row, "payload_json") if row else None
+
+
+def get_report_artifact(report_id: str) -> dict | None:
+    init_db()
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT * FROM report_artifacts WHERE report_id = ? ORDER BY created_at DESC LIMIT 1",
+            (report_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return {
+        "id": row["id"],
+        "report_id": row["report_id"],
+        "status": row["status"],
+        "qa_verdict": row["qa_verdict"],
+        "payload": _load_json(row, "payload_json"),
+        "created_at": row["created_at"],
+    }
+
+
+def persist_report_artifact(
+    *,
+    report_id: str,
+    qa_verdict: str,
+    payload: dict[str, Any],
+    created_at: str,
+    data_source: str = "llm-report-writer",
+) -> dict:
+    init_db()
+    status = "delivered_with_risk" if qa_verdict == "pass_with_risk" else "delivered"
+    artifact_id = f"artifact_{report_id}_{uuid4().hex[:10]}"
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO report_artifacts (id, report_id, status, qa_verdict, payload_json, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (artifact_id, report_id, status, qa_verdict, _json(payload), created_at),
+        )
+        connection.execute(
+            "UPDATE reports SET qa_status = ?, data_source = ?, updated_at = ? WHERE id = ?",
+            (qa_verdict, data_source, created_at, report_id),
+        )
+    return get_report_artifact(report_id)
 
 
 def list_trace_steps(report_id: str) -> list[dict]:

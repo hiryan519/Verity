@@ -1,7 +1,7 @@
 # AI Product Research Agent Console TODO
 
 版本：v0.1  
-状态：P3.4 最小实现已完成，B3.1-B3.7 在线研究链路已完成；已实现真实 LLM 调用、模型路由、结构化输出校验、Trace、Tavily 公开网页 Evidence、独立在线 Run、三专家 Workflow、交叉验证受控重试和 QA Gate；在线案例已完成至 QA，但 QA 仍可能返回 rework，最终报告撰写与交付验证进入下一阶段；P1 主链路页面已按 UI Preview 完成视觉迁移
+状态：P3.4 最小实现已完成，B3.1-B3.7 在线研究链路已完成；B3.8 已完成报告撰写门控、结构化报告资产落库、读取接口和测试，但当前在线案例的 QA 结果仍为 `rework`，因此没有伪造最终报告；P1 主链路页面已按 UI Preview 完成视觉迁移
 关联文档：`docs/AI_Product_Research_Agent_PRD.md`、`docs/ARCHITECTURE.md`、`docs/DECISION_LOG.md`、`docs/MECHANISM.md`、`docs/DESIGN.md`
 
 ## 文档分工
@@ -22,7 +22,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - Verity 自己补充竞品研究业务层、证据治理、Analysis Pack、QA Gate、Trace 展示、Research Memory 治理和 Web Console。
 - 当前前端采用 `apps/web` Next.js；后端采用 `apps/api` FastAPI；本地结构化数据采用 SQLite。
 - 当前已完成 P1 Mock UI、P2 结构化数据与业务机制、P3 Evolva 接入的最小 wrapper。
-- 当前真实程度边界：页面形态、SQLite local-db、Evidence Scoring、Analysis Pack、QA Gate、TraceRecorder 映射、Expert wrapper、Memory 最小治理已实现；真实 LLM expert execution 已可在本地或 Tavily Extract Evidence 上运行并写入 Trace / Analysis Pack / QA Gate；在线 Run 已保存研究范围、批量查询、Evidence provenance、content_hash 和专家链路。最终 Report Writer 在线交付、真实知识库检索和端到端报告质量验证仍待完成。
+- 当前真实程度边界：页面形态、SQLite local-db、Evidence Scoring、Analysis Pack、QA Gate、TraceRecorder 映射、Expert wrapper、Memory 最小治理已实现；真实 LLM expert execution 已可在本地或 Tavily Extract Evidence 上运行并写入 Trace / Analysis Pack / QA Gate；在线 Run 已保存研究范围、批量查询、Evidence provenance、content_hash 和专家链路；Report Writer 已实现 QA 门控、结构化输出校验、报告资产落库和读取接口，但在线 Run 仍需先取得 QA `pass` / `pass_with_risk` 才会生成真实报告资产。真实知识库检索和端到端报告质量验证仍待完成。
 - 2026-07-13 已在 `docs/MECHANISM.md` 确认专家体系、Evidence Router / Evidence Slice、QA Brief Builder、Report Renderer、按需多实例和各专家执行契约；这些契约已落成 Expert Registry 与 Execution Contract，后续开发应继续沿用注册表和契约，不直接编写散落的 prompt。
 
 ## 0. 执行原则
@@ -64,17 +64,17 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - 专家模型按 Expert Registry 的模型档位路由，支持专家级和档位级环境变量覆盖。状态：已完成。
 - 结构化输出按专家 Execution Contract 校验，失败结果不进入成功路径。状态：已完成。
 - 执行请求必须绑定 Expert Registry、Execution Contract、Memory / Skill Context 和 Trace 边界。
-- 真实 provider 配置完成后，至少 3 类专家输出结构化结果，并进入 Trace / Analysis Pack / QA Gate。状态：已完成；在线案例实际 QA 结果为 `rework`，仍需下一阶段补齐 Report Writer 交付验证。
+- 真实 provider 配置完成后，至少 3 类专家输出结构化结果，并进入 Trace / Analysis Pack / QA Gate。状态：已完成；在线案例实际 QA 结果为 `rework`，B3.8 已完成门控与报告资产接口，在线通过样本待后续验证。
 
-## 当前下一步：B3.8 在线报告撰写与交付验证
+## 当前任务：B4 知识库作为证据源增强
 
-在 B3.7 已完成的在线 Run 上，接入报告撰写专家（必要时按章节并行），仅允许使用通过 Evidence / Analysis Pack / QA Gate 的内容生成可追溯报告；当 QA 为 `rework` 时先保留风险状态或请求人工确认，不得直接标记为最终通过。
+B3.8 已完成报告撰写门控、报告资产接口和结构化引用校验。B4 先接入知识库检索，再在获得 QA `pass` / `pass_with_risk` 的真实在线 Run 后补做 Report Writer Provider Smoke Test；当前在线案例 QA 为 `rework`，仍保持返工状态。
 
 验收标准：
 
-- 同一在线 Run 能从研究范围、Evidence、三类专家、交叉验证和 QA 进入 Report Writer。
-- 报告章节保留 Claim、Evidence ID、来源 URL、风险和 QA 状态关联。
-- QA `pass` 或 `pass_with_risk` 才能进入报告交付；`rework` 只能输出返工建议或待确认状态。
+- 知识库检索结果能按需转化为 `source_type = user_knowledge` 的 Evidence，并保留来源和用户反馈入口。
+- 知识库内容不常驻专家上下文，只在研究范围和检索条件匹配时进入 Evidence / Analysis Pack。
+- 用户删除引用或标注不合适后，相关 Memory Candidate 能进入降权或隔离路径。
 
 ## Phase 0：开发前确认
 
@@ -659,7 +659,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - B3.4 Prompt / schema 草稿：基于 Expert Registry 为各专家生成 LLM-backed execution 的输入输出 schema 和 prompt fragment，但不把 prompt 暴露为页面可自由编辑项。状态：已完成，见 `apps/api/verity_api/expert_execution_contracts.py`。
 - B3.5 并行执行增强：按竞品、维度、Evidence Slice、Claim 数量和 token 预算拆分同类型专家实例，并将 fragment 合并为稳定 Pack。状态：已完成，见 `apps/api/verity_api/expert_instance_planner.py`。
 - B3.6 Memory / Skill 接入：将 active memory 以受控 checklist / prompt context 注入目标专家；candidate memory 只按目标专家低权重试用；Skill 只使用经过治理的版本化方法。状态：已完成，见 `apps/api/verity_api/expert_context.py`。
-- B3.7 LLM-backed expert execution：逐步替换 deterministic expert wrapper，至少让 3 类专家输出真实结构化结果，并写入 Trace / Analysis Pack / QA Gate。状态：Provider Adapter、专家模型路由、结构化输出校验、单专家 `/execute`、Trace 追加边界和三专家本地 Evidence Workflow 已完成；Tavily 公开网页采集适配也已完成，但在线 Evidence 尚未接入该 Workflow，在线案例仍待验证。
+- B3.7 LLM-backed expert execution：逐步替换 deterministic expert wrapper，至少让 3 类专家输出真实结构化结果，并写入 Trace / Analysis Pack / QA Gate。状态：已完成 Provider Adapter、专家模型路由、结构化输出校验、单专家 `/execute`、Trace 追加边界、Tavily 在线 Evidence 接入和三专家在线 Run 验证；QA 结果仍按真实数据输出 `pass` / `rework`，不伪造通过。
 
 验收标准：
 
@@ -667,9 +667,27 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - B3.3：Evidence Router、QA Brief Builder、Report Renderer 在工程上与专家类型区分清楚。
 - B3.4：每类专家具备独立输入输出 schema 草稿，且与 `docs/MECHANISM.md` 对齐。
 - B3.5：至少 2 个同类型专家实例可并行执行并合并 fragment。
-- B3.7：至少 3 个专家输出真实结构化结果，且可追溯到 Trace 和 Analysis Pack。
+- B3.7：至少 3 个专家输出真实结构化结果，且可追溯到 Trace 和 Analysis Pack。状态：已完成。
 
-状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.6 已完成。B3.7 的本地 Evidence 验收已完成，在线 Evidence 采集适配已完成；当前唯一未完成的验收是：同一个在线 Run 中，让 Tavily Evidence 经过至少 3 类真实专家、交叉验证和 QA Gate，并可追溯到最终结果。完成前 B3.7 保持“部分完成”。
+状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.7 已完成。2026-07-18 的在线 Run 已验证 Tavily Evidence → 三类真实专家 → 交叉验证 → QA Gate 的关联链路；B3.8 已完成报告撰写门控与资产接口，下一阶段转入 B4。
+
+### B3.8 在线报告撰写与交付验证
+
+任务：
+
+- 在同一在线 Run 上读取已落库的 Analysis Pack 和 QA Gate 结果。
+- 仅允许 QA `pass` 或 `pass_with_risk` 进入 Report Writer；`rework` 必须阻断并返回返工原因。
+- 将 Report Writer 的结构化章节、Claim / Evidence 引用、风险披露、表格 / 图表规范和 Trace 摘要保存为报告资产。
+- 提供报告资产读取接口，为后续报告阅读页和 Report Renderer 接入保留稳定数据边界。
+
+验收标准：
+
+- Report Writer 输入包含 Analysis Pack、QA Gate、Claim-Evidence 索引和报告大纲。
+- 报告输出的核心结论只能来自 Analysis Pack，且每章保留 Claim / Evidence ID 关联。
+- QA `rework` 不调用 Report Writer；QA `pass` / `pass_with_risk` 才能生成报告资产。
+- 在线 Run 的报告撰写调用写入 Trace，并可通过报告详情接口读取。
+
+状态：门控、结构化输出校验、报告资产落库、报告详情读取接口和单元测试已完成；真实在线 Run 当前 QA 为 `rework`，已验证不会调用 Report Writer，待后续获得 QA `pass` / `pass_with_risk` 后执行真实 Provider Smoke Test。
 
 ### B4 知识库作为证据源增强
 
