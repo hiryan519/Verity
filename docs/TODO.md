@@ -1,7 +1,7 @@
 # AI Product Research Agent Console TODO
 
 版本：v0.1  
-状态：P3.4 最小实现已完成，B3.1-B3.6 已完成，B3.7 LLM execution boundary 已完成；真实 provider 调用待配置后继续
+状态：P3.4 最小实现已完成，B3.1-B3.6 已完成；B3.7 部分完成：真实 LLM 调用、模型路由、结构化输出校验、Trace、三专家本地 Evidence 链路、Tavily 公开网页采集适配均已实现；Tavily Evidence 接入正式多专家 Workflow、在线案例落库与最终报告验证仍待完成；P1 主链路页面已按 UI Preview 完成视觉迁移
 关联文档：`docs/AI_Product_Research_Agent_PRD.md`、`docs/ARCHITECTURE.md`、`docs/DECISION_LOG.md`、`docs/MECHANISM.md`、`docs/DESIGN.md`
 
 ## 文档分工
@@ -22,8 +22,8 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - Verity 自己补充竞品研究业务层、证据治理、Analysis Pack、QA Gate、Trace 展示、Research Memory 治理和 Web Console。
 - 当前前端采用 `apps/web` Next.js；后端采用 `apps/api` FastAPI；本地结构化数据采用 SQLite。
 - 当前已完成 P1 Mock UI、P2 结构化数据与业务机制、P3 Evolva 接入的最小 wrapper。
-- 当前真实程度边界：页面形态、SQLite local-db、Evidence Scoring、Analysis Pack、QA Gate、TraceRecorder 映射、Expert wrapper、Memory 最小治理已实现；真实在线竞品研究 workflow、真实 LLM-backed expert execution、真实知识库检索和端到端案例验证仍未完成。
-- 2026-07-13 已在 `docs/MECHANISM.md` 确认专家体系、Evidence Router / Evidence Slice、QA Brief Builder、Report Renderer、按需多实例和各专家执行契约；下一步应先把这些契约落成工程可读取的 Expert Registry，而不是直接编写散落的 prompt。
+- 当前真实程度边界：页面形态、SQLite local-db、Evidence Scoring、Analysis Pack、QA Gate、TraceRecorder 映射、Expert wrapper、Memory 最小治理已实现；真实 LLM expert execution 已可在本地 Evidence 上运行并写入 Analysis Pack / QA Gate；Tavily 公开网页采集适配已实现，但尚未接入正式多专家在线研究 workflow；真实知识库检索和端到端在线案例验证仍未完成。
+- 2026-07-13 已在 `docs/MECHANISM.md` 确认专家体系、Evidence Router / Evidence Slice、QA Brief Builder、Report Renderer、按需多实例和各专家执行契约；这些契约已落成 Expert Registry 与 Execution Contract，后续开发应继续沿用注册表和契约，不直接编写散落的 prompt。
 
 ## 0. 执行原则
 
@@ -36,26 +36,35 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - TODO 中的“状态”必须同时说明已完成能力和未完成边界，避免把 mock / wrapper 误读为真实能力。
 - 机制细节以 `docs/MECHANISM.md` 为准；TODO 只保留开发必须知道的摘要和链接。
 
-## 当前下一步：B3.7 真实 provider 调用
+## 当前下一步：B3.7 在线 Evidence 接入与端到端验证
 
-目标：
+当前只做下面这一件事：把 Tavily 成功提取的 Evidence 接入现有三专家 Workflow，并完成一次可追溯的在线案例运行。
 
-- 配置真实 LLM provider、模型和 API key。
-- 在已建立的 LLM execution boundary 上实现真实专家调用。
-- 至少支持 3 类专家输出结构化结果，并写入 Trace / Analysis Pack / QA Gate。
+执行顺序：
+
+1. 创建一次独立的在线研究 Run，保存研究目标、时间范围、分析维度和运行 ID。
+2. 按分析维度生成多组公开网页查询，将 Tavily Extract 成功结果写入该 Run 的 Evidence Store；Search 摘要不得直接进入 Evidence。
+3. 用至少 3 类真实专家读取这些 Evidence，结果写入 Trace、Analysis Pack 和 QA Gate；数据不足时保留 `data_gap`。
+4. 修复交叉验证输出失败或触发一次受控重试；QA 只能输出通过、带风险通过或返工。
+5. 完成一次在线案例后，再把该 Run 标记为 `is_real_research=true`；在此之前不得把 Tavily 采集适配包装成完整在线研究能力。
+
+本任务完成标准：同一个 Run 中能看到 Evidence → 三类专家输出 → 交叉验证 → QA Gate 的完整关联，且每条 Evidence 保留 URL、抓取时间、评分、风险和 `content_hash`。
 
 建议影响文件：
 
-- `apps/api/verity_api/`：继续扩展 LLM provider adapter、expert execution service、Trace 写入和结构化结果落库。
-- `apps/api/tests/`：新增 LLM provider 未配置、结构化 schema、边界标识测试。
-- `docs/TODO.md`：完成后更新 B3.7 状态。
+- `apps/api/verity_api/`：连接 Tavily Evidence Collection、在线 Run、三专家 Workflow 和结果落库。
+- `apps/api/tests/`：补充在线 Evidence 到 Analysis Pack / QA Gate 的集成测试和交叉验证失败重试测试。
+- `docs/TODO.md`：完成本任务后更新 B3.7 状态。
 
 验收标准：
 
 - 未配置真实 provider 时，接口返回 `available=false` 和明确原因。状态：已完成。
 - 不把 deterministic wrapper 或 mock seed 包装成 LLM-backed execution。状态：已完成。
+- Provider Adapter 支持 OpenAI-compatible Chat Completions、超时/网络/服务端错误边界和 JSON 输出解析。状态：已完成；使用测试替身验证，未出网。
+- 专家模型按 Expert Registry 的模型档位路由，支持专家级和档位级环境变量覆盖。状态：已完成。
+- 结构化输出按专家 Execution Contract 校验，失败结果不进入成功路径。状态：已完成。
 - 执行请求必须绑定 Expert Registry、Execution Contract、Memory / Skill Context 和 Trace 边界。
-- 真实 provider 配置完成后，至少 3 类专家输出结构化结果，并进入 Trace / Analysis Pack / QA Gate。
+- 真实 provider 配置完成后，至少 3 类专家输出结构化结果，并进入 Trace / Analysis Pack / QA Gate。状态：本地 Evidence 链路已完成；在线 Tavily Evidence 链路待完成。
 
 ## Phase 0：开发前确认
 
@@ -164,6 +173,12 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - 调研范围确认页是执行前 Human Gate。
 - 调研执行页和报告阅读页采用左中右三栏结构。
 - 报告页必须优先保证引用追溯和证据侧栏，而不是先堆图表。
+
+视觉迁移状态（2026-07-16）：
+
+- 工作台、调研范围确认、调研执行、报告阅读、决策链路、我的调研已按 `docs/verity-ui-design-preview.html` 迁移到 `apps/web`。
+- 专家公会与专家详情沿用已完成的治理台视觉，并已确认新全局 Shell 未破坏其布局。
+- 知识库与竞争情报中心在 UI Preview 中没有独立页面设计，当前只统一视觉并保留诚实占位，不伪造检索、图表或情报指标能力。
 
 ### 1.1 搭建 Web 应用骨架
 
@@ -634,7 +649,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - B3.4 Prompt / schema 草稿：基于 Expert Registry 为各专家生成 LLM-backed execution 的输入输出 schema 和 prompt fragment，但不把 prompt 暴露为页面可自由编辑项。状态：已完成，见 `apps/api/verity_api/expert_execution_contracts.py`。
 - B3.5 并行执行增强：按竞品、维度、Evidence Slice、Claim 数量和 token 预算拆分同类型专家实例，并将 fragment 合并为稳定 Pack。状态：已完成，见 `apps/api/verity_api/expert_instance_planner.py`。
 - B3.6 Memory / Skill 接入：将 active memory 以受控 checklist / prompt context 注入目标专家；candidate memory 只按目标专家低权重试用；Skill 只使用经过治理的版本化方法。状态：已完成，见 `apps/api/verity_api/expert_context.py`。
-- B3.7 LLM-backed expert execution：逐步替换 deterministic expert wrapper，至少让 3 类专家输出真实结构化结果，并写入 Trace / Analysis Pack / QA Gate。状态：已完成 provider 状态与 execution boundary，未配置真实 provider 时会明确 blocked，不会回退为 mock；真实 provider 调用待继续。
+- B3.7 LLM-backed expert execution：逐步替换 deterministic expert wrapper，至少让 3 类专家输出真实结构化结果，并写入 Trace / Analysis Pack / QA Gate。状态：Provider Adapter、专家模型路由、结构化输出校验、单专家 `/execute`、Trace 追加边界和三专家本地 Evidence Workflow 已完成；Tavily 公开网页采集适配也已完成，但在线 Evidence 尚未接入该 Workflow，在线案例仍待验证。
 
 验收标准：
 
@@ -644,7 +659,7 @@ Verity 采用“Evolva Agent Infra + Verity Web Adapter / Business Layer”的�
 - B3.5：至少 2 个同类型专家实例可并行执行并合并 fragment。
 - B3.7：至少 3 个专家输出真实结构化结果，且可追溯到 Trace 和 Analysis Pack。
 
-状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.6 已完成，B3.7 已完成 provider boundary。当前完成 deterministic local-db wrapper 和 LLM provider readiness 检查，尚未完成真实 provider 调用与真实结构化专家输出落库。
+状态：机制已确认，详见 `docs/MECHANISM.md` 第 1 章；B3.1-B3.6 已完成。B3.7 的本地 Evidence 验收已完成，在线 Evidence 采集适配已完成；当前唯一未完成的验收是：同一个在线 Run 中，让 Tavily Evidence 经过至少 3 类真实专家、交叉验证和 QA Gate，并可追溯到最终结果。完成前 B3.7 保持“部分完成”。
 
 ### B4 知识库作为证据源增强
 
